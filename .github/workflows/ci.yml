@@ -225,10 +225,11 @@ jobs:
           fi
           echo "::notice::Hook allow test passed!"
 
-      - name: Test hook blocks dangerous command
+      - name: Test hook blocks secret in command
         run: |
-          # Test that dangerous commands are blocked (exit code 2)
-          echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | ./target/release/railguard hook > /tmp/hook_output.txt 2>&1 || EXIT_CODE=$?
+          # Test that secrets are blocked (exit code 2)
+          # Using a fake AWS key pattern that triggers secret detection
+          echo '{"tool_name":"Bash","tool_input":{"command":"echo AKIAIOSFODNN7EXAMPLE"}}' | ./target/release/railguard hook > /tmp/hook_output.txt 2>&1 || EXIT_CODE=$?
 
           echo "Hook result:"
           cat /tmp/hook_output.txt
@@ -236,7 +237,7 @@ jobs:
 
           # Should be blocked (exit 2)
           if [ "${EXIT_CODE:-0}" -ne 2 ]; then
-            echo "::error::Dangerous command was not blocked (exit code: ${EXIT_CODE:-0})"
+            echo "::error::Secret was not blocked (exit code: ${EXIT_CODE:-0})"
             exit 1
           fi
 
