@@ -30,7 +30,7 @@ use rg_types::{HookInput, Verdict};
 /// - Parses as `HookInput`
 /// - Inspects against policy
 /// - Outputs hookSpecificOutput JSON to stdout
-/// - Always exits 0 (decision is in JSON, not exit code)
+/// - Exit codes: 0 = allow/ask, 2 = deny
 pub fn run_hook(policy: &RuntimePolicy) -> ExitCode {
     // Read from stdin
     let stdin = io::stdin();
@@ -44,7 +44,7 @@ pub fn run_hook(policy: &RuntimePolicy) -> ExitCode {
             }
             Err(e) => {
                 output_error(&format!("Failed to read stdin: {e}"));
-                return ExitCode::SUCCESS; // Always exit 0, error is in JSON
+                return ExitCode::from(2); // Fail closed on errors
             }
         }
     }
@@ -54,7 +54,7 @@ pub fn run_hook(policy: &RuntimePolicy) -> ExitCode {
         Ok(i) => i,
         Err(e) => {
             output_error(&format!("Failed to parse JSON: {e}"));
-            return ExitCode::SUCCESS;
+            return ExitCode::from(2); // Fail closed on parse errors
         }
     };
 
@@ -64,7 +64,11 @@ pub fn run_hook(policy: &RuntimePolicy) -> ExitCode {
     // Output Claude Code-native format
     output_verdict(&verdict);
 
-    ExitCode::SUCCESS
+    // Exit code: 0 = allow/ask, 2 = deny
+    match verdict {
+        Verdict::Allow | Verdict::Ask { .. } => ExitCode::SUCCESS,
+        Verdict::Deny { .. } => ExitCode::from(2),
+    }
 }
 
 /// Output a verdict as Claude Code-native hookSpecificOutput JSON.

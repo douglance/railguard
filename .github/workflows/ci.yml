@@ -227,20 +227,25 @@ jobs:
 
       - name: Test hook blocks dangerous command
         run: |
-          # Test that dangerous commands are blocked
-          set +e
-          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | ./target/release/railguard hook)
-          EXIT_CODE=$?
-          set -e
+          # Test that dangerous commands are blocked (exit code 2)
+          echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | ./target/release/railguard hook > /tmp/hook_output.txt 2>&1 || EXIT_CODE=$?
 
-          echo "Hook result: $RESULT"
-          echo "Exit code: $EXIT_CODE"
+          echo "Hook result:"
+          cat /tmp/hook_output.txt
+          echo "Exit code: ${EXIT_CODE:-0}"
 
           # Should be blocked (exit 2)
-          if [ "$EXIT_CODE" -ne 2 ]; then
-            echo "::error::Dangerous command was not blocked (exit code: $EXIT_CODE)"
+          if [ "${EXIT_CODE:-0}" -ne 2 ]; then
+            echo "::error::Dangerous command was not blocked (exit code: ${EXIT_CODE:-0})"
             exit 1
           fi
+
+          # Verify the output contains deny
+          if ! grep -q '"permissionDecision":"deny"' /tmp/hook_output.txt; then
+            echo "::error::Hook output does not contain deny decision"
+            exit 1
+          fi
+
           echo "::notice::Hook block test passed!"
 
       - name: Test lint command

@@ -7,7 +7,9 @@
 use std::panic::{self, AssertUnwindSafe};
 use std::time::Instant;
 
-use rg_types::{BlockReason, Config, HookInput, PolicyConfig, PolicyMode, ToolInput, ToolsConfig, Verdict};
+use rg_types::{
+    BlockReason, Config, HookInput, PolicyConfig, PolicyMode, ToolInput, ToolsConfig, Verdict,
+};
 
 use crate::commands::CommandScanner;
 use crate::network::NetworkChecker;
