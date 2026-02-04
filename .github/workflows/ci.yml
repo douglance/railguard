@@ -1,0 +1,319 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+  MSRV: "1.75.0"
+
+jobs:
+  # =============================================================================
+  # Core Quality Gates
+  # =============================================================================
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: cargo test --workspace --all-features
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  # =============================================================================
+  # Security & Compatibility
+  # =============================================================================
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  msrv:
+    name: MSRV Check (${{ env.MSRV }})
+    runs-on: ubuntu-latest
+    env:
+      MSRV: "1.75.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.MSRV }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Check MSRV
+        run: cargo check --workspace --all-features
+
+  # =============================================================================
+  # Coverage
+  # =============================================================================
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate coverage
+        run: cargo llvm-cov --workspace --lcov --output-path lcov.info
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(cargo llvm-cov --workspace --json | jq '.data[0].totals.lines.percent')
+          echo "Line coverage: $COVERAGE%"
+
+          if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+            echo "::error::Coverage $COVERAGE% is below 70% threshold"
+            exit 1
+          fi
+          echo "::notice::Coverage check passed: $COVERAGE%"
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+
+  # =============================================================================
+  # Cross-Platform Build Verification
+  # =============================================================================
+
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release
+      - name: Verify binary runs
+        run: ./target/release/railguard --version
+
+  # =============================================================================
+  # Claude Code Plugin Integration Test
+  # =============================================================================
+
+  plugin-install:
+    name: Plugin Install/Uninstall (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Create Claude Code settings directory
+        run: mkdir -p ~/.claude
+
+      - name: Create empty settings.json
+        run: echo '{}' > ~/.claude/settings.json
+
+      - name: Test railguard install
+        run: |
+          ./target/release/railguard install
+          echo "=== settings.json after install ==="
+          cat ~/.claude/settings.json
+
+      - name: Verify hook was added
+        run: |
+          # Check that hooks.preToolUse exists and contains railguard
+          if ! grep -q '"preToolUse"' ~/.claude/settings.json; then
+            echo "::error::preToolUse hook not found in settings.json"
+            exit 1
+          fi
+          if ! grep -q 'railguard' ~/.claude/settings.json; then
+            echo "::error::railguard not found in preToolUse hook"
+            exit 1
+          fi
+          echo "::notice::Install verification passed!"
+
+      - name: Test railguard uninstall
+        run: |
+          ./target/release/railguard uninstall
+          echo "=== settings.json after uninstall ==="
+          cat ~/.claude/settings.json
+
+      - name: Verify hook was removed
+        run: |
+          # Check that railguard is no longer in settings
+          if grep -q 'railguard' ~/.claude/settings.json; then
+            echo "::error::railguard still found in settings.json after uninstall"
+            exit 1
+          fi
+          echo "::notice::Uninstall verification passed!"
+
+      - name: Test install with existing settings
+        run: |
+          # Create settings with existing hooks
+          cat > ~/.claude/settings.json << 'EOF'
+          {
+            "hooks": {
+              "preToolUse": "echo existing-hook"
+            },
+            "other_setting": true
+          }
+          EOF
+
+          ./target/release/railguard install
+          echo "=== settings.json with merged hooks ==="
+          cat ~/.claude/settings.json
+
+          # Verify both hooks exist
+          if ! grep -q 'railguard' ~/.claude/settings.json; then
+            echo "::error::railguard not added to existing hooks"
+            exit 1
+          fi
+          if ! grep -q 'other_setting' ~/.claude/settings.json; then
+            echo "::error::existing settings were overwritten"
+            exit 1
+          fi
+          echo "::notice::Merge verification passed!"
+
+      - name: Test hook execution (stdin/stdout)
+        run: |
+          # Test that hook correctly processes input and returns verdict
+          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"ls -la"}}' | ./target/release/railguard hook)
+          echo "Hook result: $RESULT"
+
+          # Should be allowed (exit 0, no blocking output)
+          if echo "$RESULT" | grep -q '"decision"'; then
+            # If there's a decision field, it should be empty or not "block"
+            if echo "$RESULT" | grep -q '"block"'; then
+              echo "::error::Safe command was blocked"
+              exit 1
+            fi
+          fi
+          echo "::notice::Hook allow test passed!"
+
+      - name: Test hook blocks dangerous command
+        run: |
+          # Test that dangerous commands are blocked
+          set +e
+          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | ./target/release/railguard hook)
+          EXIT_CODE=$?
+          set -e
+
+          echo "Hook result: $RESULT"
+          echo "Exit code: $EXIT_CODE"
+
+          # Should be blocked (exit 2)
+          if [ "$EXIT_CODE" -ne 2 ]; then
+            echo "::error::Dangerous command was not blocked (exit code: $EXIT_CODE)"
+            exit 1
+          fi
+          echo "::notice::Hook block test passed!"
+
+      - name: Test lint command
+        run: |
+          # Create a valid config
+          cat > railguard.toml << 'EOF'
+          [policy]
+          mode = "strict"
+
+          [policy.secrets]
+          enabled = true
+
+          [policy.commands]
+          enabled = true
+
+          [policy.paths]
+          enabled = true
+
+          [policy.network]
+          enabled = true
+          EOF
+
+          ./target/release/railguard lint
+          echo "::notice::Lint test passed!"
+
+      - name: Test policy test command
+        run: |
+          # Test the test command
+          ./target/release/railguard test Bash '{"command":"ls"}'
+          echo "::notice::Test command passed!"
+
+  # =============================================================================
+  # Release Gate (only on tags)
+  # =============================================================================
+
+  release-gate:
+    name: Release Gate
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, lint, security-audit, msrv, coverage, build]
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version info
+        id: version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Tag: $TAG, Version: $VERSION"
+
+      - name: Verify tag matches Cargo.toml version
+        run: |
+          CARGO_VERSION=$(grep -m1 '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          TAG_VERSION=${{ steps.version.outputs.version }}
+
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "Tag version: $TAG_VERSION"
+
+          if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Version mismatch! Cargo.toml has $CARGO_VERSION but tag is v$TAG_VERSION"
+            exit 1
+          fi
+          echo "::notice::Version verified: $TAG_VERSION"
+
+      - name: Verify CHANGELOG has entry for version
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          if ! grep -q "\[$VERSION\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md missing entry for version $VERSION"
+            exit 1
+          fi
+          echo "::notice::CHANGELOG entry found for $VERSION"

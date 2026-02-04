@@ -1,0 +1,486 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # =============================================================================
+  # Quality Gates (must pass before release builds)
+  # =============================================================================
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: cargo test --workspace --all-features
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version info
+        id: version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+
+          # Check if prerelease (contains -, like v1.0.0-beta.1)
+          if [[ "$VERSION" == *"-"* ]]; then
+            PRERELEASE=true
+          else
+            PRERELEASE=false
+          fi
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "prerelease=$PRERELEASE" >> $GITHUB_OUTPUT
+
+          echo "::notice::Tag: $TAG, Version: $VERSION, Prerelease: $PRERELEASE"
+
+      - name: Verify tag matches Cargo.toml version
+        run: |
+          # Get version from workspace Cargo.toml
+          CARGO_VERSION=$(grep -A5 '^\[workspace.package\]' Cargo.toml | grep '^version' | sed 's/.*"\(.*\)".*/\1/')
+          TAG_VERSION=${{ steps.version.outputs.version }}
+
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "Tag version: $TAG_VERSION"
+
+          if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Version mismatch! Cargo.toml has $CARGO_VERSION but tag is v$TAG_VERSION"
+            echo "::error::Update Cargo.toml version before tagging."
+            exit 1
+          fi
+          echo "::notice::Version verified: $TAG_VERSION"
+
+      - name: Verify CHANGELOG entry exists
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+
+          if ! grep -q "^\## \[$VERSION\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md missing entry for version $VERSION"
+            echo "::error::Add a section: ## [$VERSION] - $(date +%Y-%m-%d)"
+            exit 1
+          fi
+          echo "::notice::CHANGELOG entry found for $VERSION"
+
+  # =============================================================================
+  # Build Release Binaries (only after all gates pass)
+  # =============================================================================
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: [test, lint, security-audit, validate-release]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            os: macos-13
+            name: darwin-x64
+          - target: aarch64-apple-darwin
+            os: macos-14
+            name: darwin-arm64
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-x64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-arm64
+            cross: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build (native)
+        if: ${{ !matrix.cross }}
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build (cross)
+        if: matrix.cross
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Verify binary
+        if: ${{ !matrix.cross }}
+        run: |
+          ./target/${{ matrix.target }}/release/railguard --version
+          ./target/${{ matrix.target }}/release/railguard --help
+
+      - name: Package
+        shell: bash
+        run: |
+          BINARY_PATH="target/${{ matrix.target }}/release/railguard"
+          ARCHIVE_NAME="railguard-${{ matrix.name }}.tar.gz"
+
+          # Create tarball
+          tar -czvf "$ARCHIVE_NAME" -C "target/${{ matrix.target }}/release" railguard
+
+          # Generate checksum (cross-platform)
+          if command -v sha256sum &> /dev/null; then
+            sha256sum "$ARCHIVE_NAME" > "${ARCHIVE_NAME}.sha256"
+          else
+            shasum -a 256 "$ARCHIVE_NAME" > "${ARCHIVE_NAME}.sha256"
+          fi
+
+          echo "=== Package created ==="
+          ls -la "$ARCHIVE_NAME"*
+          echo "=== Checksum ==="
+          cat "${ARCHIVE_NAME}.sha256"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: railguard-${{ matrix.name }}
+          path: |
+            railguard-${{ matrix.name }}.tar.gz
+            railguard-${{ matrix.name }}.tar.gz.sha256
+          retention-days: 5
+
+  # =============================================================================
+  # Create GitHub Release
+  # =============================================================================
+
+  release:
+    name: Publish GitHub Release
+    needs: [validate-release, build]
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Prepare release assets
+        id: checksums
+        run: |
+          cd artifacts
+
+          echo "=== Downloaded artifacts ==="
+          ls -la
+
+          # Create combined checksums file
+          echo "# SHA256 Checksums" > checksums.txt
+          echo "# Railguard ${{ needs.validate-release.outputs.tag }}" >> checksums.txt
+          echo "" >> checksums.txt
+
+          for f in *.sha256; do
+            cat "$f" >> checksums.txt
+          done
+
+          # Extract individual checksums for Homebrew
+          DARWIN_ARM64_SHA=$(grep 'darwin-arm64' checksums.txt | awk '{print $1}')
+          DARWIN_X64_SHA=$(grep 'darwin-x64' checksums.txt | awk '{print $1}')
+          LINUX_ARM64_SHA=$(grep 'linux-arm64' checksums.txt | awk '{print $1}')
+          LINUX_X64_SHA=$(grep 'linux-x64' checksums.txt | awk '{print $1}')
+
+          echo "darwin_arm64_sha=$DARWIN_ARM64_SHA" >> $GITHUB_OUTPUT
+          echo "darwin_x64_sha=$DARWIN_X64_SHA" >> $GITHUB_OUTPUT
+          echo "linux_arm64_sha=$LINUX_ARM64_SHA" >> $GITHUB_OUTPUT
+          echo "linux_x64_sha=$LINUX_X64_SHA" >> $GITHUB_OUTPUT
+
+          echo "=== Combined checksums ==="
+          cat checksums.txt
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        run: |
+          VERSION=${{ needs.validate-release.outputs.version }}
+
+          # Extract section between ## [VERSION] and next ## [
+          awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md > release_notes.md
+
+          # If empty, provide default
+          if [ ! -s release_notes.md ]; then
+            echo "Release ${{ needs.validate-release.outputs.tag }}" > release_notes.md
+          fi
+
+          echo "=== Release notes ==="
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.validate-release.outputs.tag }}
+          name: Railguard ${{ needs.validate-release.outputs.tag }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ needs.validate-release.outputs.prerelease == 'true' }}
+          files: |
+            artifacts/railguard-*.tar.gz
+            artifacts/checksums.txt
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Pass checksums to downstream jobs
+      - name: Save checksums
+        run: |
+          mkdir -p checksums
+          cp artifacts/checksums.txt checksums/
+          cat artifacts/*.sha256 > checksums/all.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: checksums
+          path: checksums/
+
+  # =============================================================================
+  # Publish to crates.io
+  # =============================================================================
+
+  publish-crates:
+    name: Publish to crates.io
+    needs: [validate-release, release]
+    if: needs.validate-release.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Verify crate can be packaged
+        run: |
+          cargo package -p rg-types --allow-dirty
+          cargo package -p rg-policy --allow-dirty
+          cargo package -p railguard --allow-dirty
+
+      - name: Publish rg-types
+        run: cargo publish -p rg-types --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true  # May already be published
+
+      - name: Wait for crates.io index update
+        run: sleep 30
+
+      - name: Publish rg-policy
+        run: cargo publish -p rg-policy --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
+
+      - name: Wait for crates.io index update
+        run: sleep 30
+
+      - name: Publish railguard
+        run: cargo publish -p railguard --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Crates.io summary
+        run: |
+          echo "## Crates Published! 📦" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- [rg-types](https://crates.io/crates/rg-types)" >> $GITHUB_STEP_SUMMARY
+          echo "- [rg-policy](https://crates.io/crates/rg-policy)" >> $GITHUB_STEP_SUMMARY
+          echo "- [railguard](https://crates.io/crates/railguard)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Install with: \`cargo install railguard\`" >> $GITHUB_STEP_SUMMARY
+
+  # =============================================================================
+  # Update Homebrew Tap
+  # =============================================================================
+
+  update-homebrew:
+    name: Update Homebrew Tap
+    needs: [validate-release, release]
+    if: needs.validate-release.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download checksums
+        uses: actions/download-artifact@v4
+        with:
+          name: checksums
+          path: checksums
+
+      - name: Extract checksums
+        id: sha
+        run: |
+          DARWIN_ARM64_SHA=$(grep 'darwin-arm64' checksums/checksums.txt | awk '{print $1}')
+          DARWIN_X64_SHA=$(grep 'darwin-x64' checksums/checksums.txt | awk '{print $1}')
+          LINUX_ARM64_SHA=$(grep 'linux-arm64' checksums/checksums.txt | awk '{print $1}')
+          LINUX_X64_SHA=$(grep 'linux-x64' checksums/checksums.txt | awk '{print $1}')
+
+          echo "darwin_arm64=$DARWIN_ARM64_SHA" >> $GITHUB_OUTPUT
+          echo "darwin_x64=$DARWIN_X64_SHA" >> $GITHUB_OUTPUT
+          echo "linux_arm64=$LINUX_ARM64_SHA" >> $GITHUB_OUTPUT
+          echo "linux_x64=$LINUX_X64_SHA" >> $GITHUB_OUTPUT
+
+      - name: Generate Homebrew formula
+        run: |
+          VERSION=${{ needs.validate-release.outputs.version }}
+          TAG=${{ needs.validate-release.outputs.tag }}
+
+          cat > railguard.rb << 'FORMULA'
+          class Railguard < Formula
+            desc "Security hook for Claude Code - protects against secrets leakage and dangerous commands"
+            homepage "https://github.com/douglance/railguard"
+            version "VERSION_PLACEHOLDER"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/douglance/railguard/releases/download/TAG_PLACEHOLDER/railguard-darwin-arm64.tar.gz"
+                sha256 "DARWIN_ARM64_SHA_PLACEHOLDER"
+              else
+                url "https://github.com/douglance/railguard/releases/download/TAG_PLACEHOLDER/railguard-darwin-x64.tar.gz"
+                sha256 "DARWIN_X64_SHA_PLACEHOLDER"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.arm?
+                url "https://github.com/douglance/railguard/releases/download/TAG_PLACEHOLDER/railguard-linux-arm64.tar.gz"
+                sha256 "LINUX_ARM64_SHA_PLACEHOLDER"
+              else
+                url "https://github.com/douglance/railguard/releases/download/TAG_PLACEHOLDER/railguard-linux-x64.tar.gz"
+                sha256 "LINUX_X64_SHA_PLACEHOLDER"
+              end
+            end
+
+            def install
+              bin.install "railguard"
+            end
+
+            def post_install
+              ohai "Railguard installed!"
+              ohai "Run 'railguard install' to configure Claude Code"
+            end
+
+            test do
+              assert_match "railguard", shell_output("#{bin}/railguard --version")
+            end
+          end
+          FORMULA
+
+          # Replace placeholders
+          sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" railguard.rb
+          sed -i "s/TAG_PLACEHOLDER/$TAG/g" railguard.rb
+          sed -i "s/DARWIN_ARM64_SHA_PLACEHOLDER/${{ steps.sha.outputs.darwin_arm64 }}/g" railguard.rb
+          sed -i "s/DARWIN_X64_SHA_PLACEHOLDER/${{ steps.sha.outputs.darwin_x64 }}/g" railguard.rb
+          sed -i "s/LINUX_ARM64_SHA_PLACEHOLDER/${{ steps.sha.outputs.linux_arm64 }}/g" railguard.rb
+          sed -i "s/LINUX_X64_SHA_PLACEHOLDER/${{ steps.sha.outputs.linux_x64 }}/g" railguard.rb
+
+          echo "=== Generated formula ==="
+          cat railguard.rb
+
+      - name: Push to Homebrew tap
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        with:
+          source_file: 'railguard.rb'
+          destination_repo: 'douglance/homebrew-tap'
+          destination_folder: 'Formula'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          user_name: 'github-actions[bot]'
+          commit_message: 'Update railguard to ${{ needs.validate-release.outputs.tag }}'
+        continue-on-error: true  # Don't fail release if tap update fails
+
+      - name: Homebrew summary
+        run: |
+          echo "## Homebrew Formula Updated! 🍺" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Install with:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "brew tap douglance/tap" >> $GITHUB_STEP_SUMMARY
+          echo "brew install railguard" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # =============================================================================
+  # Release Summary
+  # =============================================================================
+
+  summary:
+    name: Release Summary
+    needs: [validate-release, release, publish-crates, update-homebrew]
+    if: always() && needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Final summary
+        run: |
+          echo "## 🚀 Release ${{ needs.validate-release.outputs.tag }} Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation Options" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Quick Install (curl):**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "curl -fsSL https://raw.githubusercontent.com/douglance/railguard/main/install.sh | bash" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Homebrew:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "brew tap douglance/tap && brew install railguard" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Cargo:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "cargo install railguard" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate-release.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [crates.io](https://crates.io/crates/railguard)" >> $GITHUB_STEP_SUMMARY
