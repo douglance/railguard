@@ -148,6 +148,7 @@ pub fn shannon_entropy(s: &str) -> f64 {
         freq[byte as usize] += 1;
     }
 
+    #[allow(clippy::cast_precision_loss)] // String length won't exceed f64 precision in practice
     let len = s.len() as f64;
     let mut entropy = 0.0;
 
@@ -254,7 +255,7 @@ mod tests {
         assert!(shannon_entropy("aB3$xY9!mK") > 3.0);
 
         // Empty string
-        assert_eq!(shannon_entropy(""), 0.0);
+        assert!(shannon_entropy("").abs() < f64::EPSILON);
     }
 
     #[test]

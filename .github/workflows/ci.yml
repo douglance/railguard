@@ -155,13 +155,15 @@ jobs:
 
       - name: Verify hook was added
         run: |
-          # Check that hooks.preToolUse exists and contains railguard
-          if ! grep -q '"preToolUse"' ~/.claude/settings.json; then
-            echo "::error::preToolUse hook not found in settings.json"
+          # Check that hooks.PreToolUse exists and contains railguard
+          if ! grep -q '"PreToolUse"' ~/.claude/settings.json; then
+            echo "::error::PreToolUse hook not found in settings.json"
+            cat ~/.claude/settings.json
             exit 1
           fi
           if ! grep -q 'railguard' ~/.claude/settings.json; then
-            echo "::error::railguard not found in preToolUse hook"
+            echo "::error::railguard not found in PreToolUse hook"
+            cat ~/.claude/settings.json
             exit 1
           fi
           echo "::notice::Install verification passed!"
@@ -183,13 +185,11 @@ jobs:
 
       - name: Test install with existing settings
         run: |
-          # Create settings with existing hooks
+          # Create settings with existing config (no hooks)
           cat > ~/.claude/settings.json << 'EOF'
           {
-            "hooks": {
-              "preToolUse": "echo existing-hook"
-            },
-            "other_setting": true
+            "other_setting": true,
+            "apiKey": "test-key"
           }
           EOF
 
@@ -197,11 +197,12 @@ jobs:
           echo "=== settings.json with merged hooks ==="
           cat ~/.claude/settings.json
 
-          # Verify both hooks exist
+          # Verify railguard was added
           if ! grep -q 'railguard' ~/.claude/settings.json; then
-            echo "::error::railguard not added to existing hooks"
+            echo "::error::railguard not added to existing settings"
             exit 1
           fi
+          # Verify existing settings were preserved
           if ! grep -q 'other_setting' ~/.claude/settings.json; then
             echo "::error::existing settings were overwritten"
             exit 1

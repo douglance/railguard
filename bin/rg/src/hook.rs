@@ -96,10 +96,10 @@ fn output_verdict(verdict: &Verdict) {
         }),
     };
 
-    println!(
-        "{}",
-        serde_json::to_string(&output).expect("JSON serialization failed")
-    );
+    // JSON serialization of simple JSON values cannot fail
+    #[allow(clippy::expect_used)]
+    let json = serde_json::to_string(&output).expect("JSON serialization failed");
+    println!("{json}");
 }
 
 /// Output an error as a deny verdict.
@@ -112,10 +112,10 @@ fn output_error(message: &str) {
             "additionalContext": "Railguard encountered an error and is operating in fail-closed mode."
         }
     });
-    println!(
-        "{}",
-        serde_json::to_string(&output).expect("JSON serialization failed")
-    );
+    // JSON serialization of simple JSON values cannot fail
+    #[allow(clippy::expect_used)]
+    let json = serde_json::to_string(&output).expect("JSON serialization failed");
+    println!("{json}");
 }
 
 #[cfg(test)]

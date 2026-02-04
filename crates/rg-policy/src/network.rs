@@ -38,6 +38,7 @@ impl NetworkChecker {
 
         // Pattern to extract URLs from text
         // This is intentionally simple - matches http(s)://domain...
+        #[allow(clippy::expect_used)] // Fallback regex is a compile-time constant that cannot fail
         let url_pattern =
             Regex::new(r#"(?i)https?://([a-z0-9][-a-z0-9]*\.)+[a-z]{2,}(?:[:/][^\s"'<>]*)?"#)
                 .unwrap_or_else(|_| Regex::new(r"^$").expect("fallback regex"));

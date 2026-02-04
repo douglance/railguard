@@ -37,7 +37,7 @@ pub struct ToolsConfig {
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct McpConfig {
     /// MCP servers to allow (glob patterns on server name).
-    /// Example: ["context7", "devtools"] allows `mcp__context7`__* and `mcp__devtools`__*
+    /// Example: `["context7", "devtools"]` allows `mcp__context7__*` and `mcp__devtools__*`
     #[serde(default)]
     pub allow_servers: Vec<String>,
     /// MCP servers to deny.
@@ -101,6 +101,7 @@ pub enum PolicyMode {
 
 /// Secret scanning configuration.
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[allow(clippy::struct_excessive_bools)] // Config structs intentionally use many bools
 pub struct SecretsConfig {
     /// Enable secret scanning (default: true).
     #[serde(default = "default_true")]
@@ -289,7 +290,7 @@ block_domains = ["evil.com"]
         let config: Config = toml::from_str(toml_content).unwrap();
         assert_eq!(config.policy.mode, PolicyMode::Monitor);
         assert!(!config.policy.fail_closed);
-        assert_eq!(config.policy.secrets.entropy_threshold, 4.0);
+        assert!((config.policy.secrets.entropy_threshold - 4.0).abs() < f64::EPSILON);
         assert_eq!(config.policy.commands.block_patterns, vec!["rm -rf"]);
         assert_eq!(config.policy.network.block_domains, vec!["evil.com"]);
     }

@@ -90,8 +90,7 @@ impl Verdict {
     pub fn reason(&self) -> Option<&str> {
         match self {
             Verdict::Allow => None,
-            Verdict::Deny { reason, .. } => Some(reason),
-            Verdict::Ask { reason } => Some(reason),
+            Verdict::Deny { reason, .. } | Verdict::Ask { reason } => Some(reason),
         }
     }
 
@@ -142,8 +141,8 @@ impl Verdict {
 impl Verdict {
     /// Legacy: Create a blocked verdict from a `BlockReason`.
     #[deprecated(note = "Use deny_from_block_reason instead")]
-    pub fn blocked(reason: BlockReason) -> Self {
-        Self::deny_from_block_reason(&reason)
+    pub fn blocked(reason: &BlockReason) -> Self {
+        Self::deny_from_block_reason(reason)
     }
 
     /// Legacy: Create a blocked verdict from a string.

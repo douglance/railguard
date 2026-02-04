@@ -7,7 +7,7 @@
 use std::panic::{self, AssertUnwindSafe};
 use std::time::Instant;
 
-use rg_types::{BlockReason, Config, HookInput, PolicyConfig, PolicyMode, ToolInput, Verdict};
+use rg_types::{BlockReason, Config, HookInput, PolicyConfig, PolicyMode, ToolInput, ToolsConfig, Verdict};
 
 use crate::commands::CommandScanner;
 use crate::network::NetworkChecker;
@@ -55,7 +55,7 @@ impl RuntimePolicy {
         Self {
             mode: config.mode.clone(),
             fail_closed: config.fail_closed,
-            tools: ToolChecker::new(&Default::default()),
+            tools: ToolChecker::new(&ToolsConfig::default()),
             secrets: SecretScanner::new(&config.secrets),
             commands: CommandScanner::new(&config.commands),
             paths: PathProtector::new(&config.protected_paths),
@@ -231,9 +231,9 @@ fn get_scannable_texts(input: &ToolInput) -> Vec<&str> {
 /// Get file paths from a tool input.
 fn get_file_paths(input: &ToolInput) -> Vec<&str> {
     match input {
-        ToolInput::Write { file_path, .. } => vec![file_path.as_str()],
-        ToolInput::Edit { file_path, .. } => vec![file_path.as_str()],
-        ToolInput::Read { file_path } => vec![file_path.as_str()],
+        ToolInput::Write { file_path, .. }
+        | ToolInput::Edit { file_path, .. }
+        | ToolInput::Read { file_path } => vec![file_path.as_str()],
         _ => vec![],
     }
 }

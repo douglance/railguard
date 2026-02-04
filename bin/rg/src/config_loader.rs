@@ -109,6 +109,6 @@ block_domains = ["evil.com"]
 
         let config = load_config(temp_file.path()).unwrap();
         assert!(!config.policy.fail_closed);
-        assert_eq!(config.policy.secrets.entropy_threshold, 4.0);
+        assert!((config.policy.secrets.entropy_threshold - 4.0).abs() < f64::EPSILON);
     }
 }

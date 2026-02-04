@@ -1,7 +1,9 @@
 # Rust
 /target/
 **/target/
-Cargo.lock
+
+# Prebuilt binaries (use releases)
+bin/rg-*
 
 # IDE
 .idea/
@@ -28,14 +30,14 @@ coverage/
 # AI agent/editor configs (local only)
 .agent/
 .agents/
-.claude/
 .codex/
+.cursor/
 .gemini/
 .kiro/
 .opencode/
 .windsurf/
 
-# Node (for apps/docs)
+# Node (for docs/)
 node_modules/
 .next/
 .turbo/
