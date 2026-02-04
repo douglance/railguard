@@ -1,0 +1,92 @@
+---
+title: API Reference
+description: Complete API reference for Railguard's Rust crates.
+---
+
+Railguard is structured as a Cargo workspace with multiple crates.
+
+## Crate Overview
+
+| Crate | Description | Primary Exports |
+|-------|-------------|-----------------|
+| `rg-types` | Shared data structures | `Config`, `Verdict`, `HookInput`, `ToolInput` |
+| `rg-policy` | Policy engine | `RuntimePolicy`, `inspect()` |
+
+## Usage Example
+
+```rust
+use rg_types::{Config, HookInput, Verdict};
+use rg_policy::{RuntimePolicy, inspect};
+
+fn main() -> eyre::Result<()> {
+    // Load config
+    let config: Config = toml::from_str(&std::fs::read_to_string("railguard.toml")?)?;
+
+    // Build runtime policy
+    let policy = RuntimePolicy::from_config(&config)?;
+
+    // Inspect a tool call
+    let input = HookInput {
+        tool_name: "Bash".to_string(),
+        tool_input: serde_json::json!({
+            "command": "ls -la"
+        }),
+    };
+
+    let verdict = inspect(&input, &policy);
+
+    match verdict {
+        Verdict::Allow => println!("Allowed"),
+        Verdict::Deny { reason } => println!("Denied: {}", reason),
+        Verdict::Ask { message } => println!("Ask user: {}", message),
+    }
+
+    Ok(())
+}
+```
+
+## Quick Links
+
+- [Types Reference](/docs/api/types) — All data structures
+- [Policy Engine](/docs/policy-engine) — Deep dive into inspection logic
+- [Configuration](/docs/configuration) — Config file format
+
+## Error Handling
+
+| Crate | Error Type | Description |
+|-------|------------|-------------|
+| `rg-types` | — | No errors (pure data) |
+| `rg-policy` | `PolicyError` | Config parsing, pattern compilation |
+| `bin/rg` | `eyre::Report` | Top-level CLI error handling |
+
+### Example Error Handling
+
+```rust
+use rg_policy::{RuntimePolicy, PolicyError};
+
+fn load_policy(config: &Config) -> Result<RuntimePolicy, PolicyError> {
+    RuntimePolicy::from_config(config)
+}
+
+// PolicyError variants:
+// - InvalidPattern { pattern, reason }
+// - ConfigParsing { source }
+```
+
+## Thread Safety
+
+All public types are designed for concurrent use:
+
+- `RuntimePolicy` is `Send + Sync`
+- `Config` is `Clone`
+- `Verdict` is `Clone + Send`
+
+## Minimum Supported Rust Version
+
+Railguard requires Rust 1.75 or later.
+
+## Next Steps
+
+- [Types Reference](/docs/api/types) — Detailed type documentation
+- [Configuration](/docs/configuration) — Config file format
+- [Policy Engine](/docs/policy-engine) — Inspection logic deep dive

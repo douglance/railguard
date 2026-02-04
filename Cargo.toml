@@ -1,0 +1,152 @@
+[workspace]
+members = ["bin/rg", "crates/rg-types", "crates/rg-policy"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/douglance/railguard"
+homepage = "https://github.com/douglance/railguard"
+readme = "README.md"
+keywords = ["security", "claude", "llm", "hook", "cli"]
+categories = ["command-line-utilities", "development-tools"]
+
+[workspace.dependencies]
+# Internal crates (version required for crates.io publishing)
+rg-types = { version = "0.1.0", path = "crates/rg-types" }
+rg-policy = { version = "0.1.0", path = "crates/rg-policy" }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# CLI
+clap = { version = "4", features = ["derive", "env"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+eyre = "0.6"
+thiserror = "2"
+
+# Utilities
+dirs-next = "2"
+
+# Pattern matching
+regex = "1"
+glob = "0.3"
+
+# =============================================================================
+# Workspace Lints - Inherited by all crates via `[lints] workspace = true`
+# =============================================================================
+[workspace.lints.rust]
+# Deny unsafe code by default (crates can override if needed)
+unsafe_code = "warn"
+
+# Correctness
+unused_must_use = "deny"
+unused_results = "warn"
+
+# Documentation
+missing_docs = "warn"
+missing_debug_implementations = "warn"
+
+# Future compatibility
+rust_2024_compatibility = { level = "warn", priority = -1 }
+keyword_idents_2024 = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+
+[workspace.lints.clippy]
+# =============================================================================
+# Clippy Lint Groups
+# =============================================================================
+
+# Correctness - things that are almost certainly bugs
+correctness = { level = "deny", priority = -1 }
+
+# Suspicious - code that is most likely wrong or useless
+suspicious = { level = "warn", priority = -1 }
+
+# Style - code that should be written in a more idiomatic way
+style = { level = "warn", priority = -1 }
+
+# Complexity - code that does something simple in a complex way
+complexity = { level = "warn", priority = -1 }
+
+# Perf - code that can be written to run faster
+perf = { level = "warn", priority = -1 }
+
+# Pedantic - lints which are rather strict (opt-in)
+pedantic = { level = "warn", priority = -1 }
+
+# =============================================================================
+# Individual Lint Overrides
+# =============================================================================
+
+# Pedantic overrides - too noisy or not applicable
+module_name_repetitions = "allow"       # Common in Rust APIs
+too_many_lines = "allow"                # Sometimes needed
+must_use_candidate = "allow"            # Too noisy
+missing_errors_doc = "allow"            # We use thiserror, errors are self-documenting
+missing_panics_doc = "allow"            # We avoid panics in library code
+similar_names = "allow"                 # Sometimes intentional (tx, rx)
+
+# Security-relevant - upgrade to deny
+unwrap_used = "warn"                    # Prefer expect() or proper error handling
+expect_used = "warn"                    # Should use proper error handling in libs
+panic = "warn"                          # Avoid panics in library code
+todo = "warn"                           # Don't leave TODOs in production
+unimplemented = "warn"                  # Don't leave unimplemented in production
+dbg_macro = "warn"                      # Remove debug macros before commit
+
+# Correctness - strict
+cast_possible_truncation = "warn"
+cast_sign_loss = "warn"
+cast_possible_wrap = "warn"
+cast_precision_loss = "warn"
+
+# Code clarity
+needless_pass_by_value = "warn"
+redundant_closure_for_method_calls = "warn"
+cloned_instead_of_copied = "warn"
+explicit_iter_loop = "warn"
+flat_map_option = "warn"
+manual_let_else = "warn"
+match_same_arms = "warn"
+semicolon_if_nothing_returned = "warn"
+uninlined_format_args = "warn"
+unnecessary_wraps = "warn"
+used_underscore_binding = "warn"
+
+# Complexity - lower than default (25) for better maintainability
+cognitive_complexity = "warn"
+
+# Documentation
+doc_markdown = "warn"
+
+[workspace.lints.rustdoc]
+broken_intra_doc_links = "warn"
+private_intra_doc_links = "warn"
+
+# =============================================================================
+# Build Profiles
+# =============================================================================
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+panic = "abort"
+codegen-units = 1
+
+[profile.dev]
+# Faster incremental builds
+debug = 1                               # Limited debug info
+incremental = true
+
+[profile.dev.package."*"]
+# Optimize dependencies even in dev for faster runtime
+opt-level = 2

@@ -1,0 +1,39 @@
+# Cargo Configuration
+# https://doc.rust-lang.org/cargo/reference/config.html
+
+[alias]
+# Lint with all warnings
+lint = "clippy --workspace --all-targets --all-features -- -D warnings"
+
+# Lint but don't fail (for development)
+lint-dev = "clippy --workspace --all-targets --all-features"
+
+# Format check (CI)
+fmt-check = "fmt --all --check"
+
+# Fix common issues automatically
+fix-all = "clippy --workspace --all-targets --all-features --fix --allow-dirty --allow-staged"
+
+# Run all quality checks (what CI runs)
+ci = ["fmt-check", "lint", "test"]
+
+# Test with all features
+test-all = "test --workspace --all-features"
+
+# Build docs with private items
+docs = "doc --workspace --all-features --no-deps --document-private-items"
+
+[build]
+# Use all available CPU cores
+jobs = -1
+
+# Incremental compilation for faster rebuilds in dev
+incremental = true
+
+[env]
+# Emit backtraces on panic
+RUST_BACKTRACE = "1"
+
+# Linux only: use lld for faster linking (commented out - enable if lld is installed)
+# [target.x86_64-unknown-linux-gnu]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]

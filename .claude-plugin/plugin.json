@@ -1,0 +1,12 @@
+{
+  "name": "railguard",
+  "version": "0.1.0",
+  "description": "LLM protection hook - blocks secrets, dangerous commands, and data exfiltration",
+  "author": {
+    "name": "Railguard",
+    "url": "https://github.com/lv/railguard"
+  },
+  "keywords": ["security", "protection", "hook", "secrets", "exfiltration"],
+  "hooks": "./hooks/hooks.json",
+  "skills": "./skills/"
+}

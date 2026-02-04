@@ -1,0 +1,36 @@
+# Rustfmt Configuration
+# https://rust-lang.github.io/rustfmt/
+#
+# Note: Many useful options require nightly. This config uses stable-only options.
+# For a more comprehensive format, run: cargo +nightly fmt
+
+# Stable options
+edition = "2021"
+max_width = 100
+tab_spaces = 4
+newline_style = "Unix"
+use_small_heuristics = "Default"
+
+# Import organization
+reorder_imports = true
+reorder_modules = true
+
+# Formatting style
+use_field_init_shorthand = true
+use_try_shorthand = true
+
+# ---------------------------------------------------------------------------
+# Nightly-only options (uncomment when using nightly)
+# ---------------------------------------------------------------------------
+# imports_granularity = "Crate"
+# group_imports = "StdExternalCrate"
+# indent_style = "Block"
+# where_single_line = false
+# trailing_comma = "Vertical"
+# trailing_semicolon = true
+# format_code_in_doc_comments = true
+# wrap_comments = false
+# normalize_comments = false
+# normalize_doc_attributes = true
+# format_macro_matchers = true
+# format_macro_bodies = true

@@ -1,0 +1,153 @@
+---
+title: Getting Started
+description: Install Railguard and protect your Claude Code sessions in minutes.
+---
+
+## Installation
+
+### Quick Install (Recommended)
+
+```bash
+curl -fsSL https://railguard.dev/install.sh | bash
+```
+
+This will:
+1. Download the correct binary for your platform
+2. Install it to `~/.local/bin/`
+3. Configure Claude Code to use Railguard
+
+### From GitHub Releases
+
+Download the latest release for your platform:
+
+- [darwin-arm64](https://github.com/anthropics/railguard/releases/latest/download/railguard-darwin-arm64.tar.gz) (macOS Apple Silicon)
+- [darwin-x64](https://github.com/anthropics/railguard/releases/latest/download/railguard-darwin-x64.tar.gz) (macOS Intel)
+- [linux-arm64](https://github.com/anthropics/railguard/releases/latest/download/railguard-linux-arm64.tar.gz)
+- [linux-x64](https://github.com/anthropics/railguard/releases/latest/download/railguard-linux-x64.tar.gz)
+
+```bash
+# Example: macOS Apple Silicon
+tar -xzf railguard-darwin-arm64.tar.gz
+mv railguard ~/.local/bin/
+railguard install
+```
+
+### From Source
+
+```bash
+git clone https://github.com/anthropics/railguard.git
+cd railguard
+cargo build --release
+cp target/release/railguard ~/.local/bin/
+railguard install
+```
+
+## Quick Start
+
+### 1. Install the Hook
+
+```bash
+railguard install
+```
+
+This adds Railguard to `~/.claude/settings.json` as a `preToolUse` hook.
+
+### 2. Verify Installation
+
+```bash
+railguard --version
+```
+
+### 3. Create a Policy (Optional)
+
+Create `railguard.toml` in your project or home directory:
+
+```toml
+[policy]
+mode = "strict"  # "strict" blocks, "monitor" logs only
+
+[policy.secrets]
+enabled = true
+
+[policy.commands]
+enabled = true
+
+[policy.protected_paths]
+enabled = true
+
+[policy.network]
+enabled = true
+
+# Tool-level permissions
+[tools]
+allow = []
+deny = []
+ask = ["mcp__*"]  # Prompt for MCP tools
+```
+
+### 4. Test Your Policy
+
+```bash
+# Test a safe command
+railguard test Bash '{"command":"ls -la"}'
+# Result: ALLOWED
+
+# Test a dangerous command
+railguard test Bash '{"command":"rm -rf /"}'
+# Result: DENIED (Dangerous command pattern)
+
+# Test secret detection
+railguard test Write '{"content":"AKIA1234567890EXAMPLE"}'
+# Result: DENIED (AWS access key detected)
+```
+
+### 5. Validate Configuration
+
+```bash
+railguard lint
+```
+
+## How It Works
+
+When Claude Code attempts to use a tool:
+
+1. Claude Code calls `railguard hook` with JSON on stdin
+2. Railguard parses the tool name and input
+3. Policy engine runs checks: tools → secrets → commands → paths → network
+4. Returns verdict: `allow`, `deny` (with reason), or `ask` (prompt user)
+5. Claude Code proceeds or blocks based on verdict
+
+```
+{"tool_name":"Bash","tool_input":{"command":"ls"}}
+                    │
+                    ▼
+           railguard hook (stdin)
+                    │
+                    ▼
+            rg_policy::inspect()
+                    │
+        ┌───────────┴───────────┐
+        ▼                       ▼
+   Tool Check            Parameter Check
+        │                       │
+   (early deny)    ┌────────────┼────────────┐
+        │          ▼            ▼            ▼
+        │      Secrets      Commands      Paths
+        │          │            │            │
+        │          └────────────┼────────────┘
+        │                       ▼
+        │                   Network
+        │                       │
+        └───────────┬───────────┘
+                    ▼
+          Verdict (Allow|Deny|Ask)
+                    │
+                    ▼
+              Exit Code (0 or 2)
+```
+
+## Next Steps
+
+- [Configuration](/docs/configuration) — Full config file reference
+- [Policy Engine](/docs/policy-engine) — How inspection works
+- [CLI Reference](/docs/cli) — All command-line options

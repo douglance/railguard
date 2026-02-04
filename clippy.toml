@@ -1,0 +1,73 @@
+# Clippy Configuration
+# https://doc.rust-lang.org/clippy/configuration.html
+
+# MSRV - Minimum Supported Rust Version
+# Clippy will not suggest features newer than this
+msrv = "1.75"
+
+# Cognitive complexity threshold
+# Functions exceeding this are flagged by clippy::cognitive_complexity
+cognitive-complexity-threshold = 25
+
+# Maximum number of lines in a function body
+# Disabled in workspace lints, but kept here as reference
+too-many-lines-threshold = 200
+
+# Maximum number of arguments a function can have
+too-many-arguments-threshold = 8
+
+# Type complexity threshold
+type-complexity-threshold = 250
+
+# Allowed names that would otherwise trigger `disallowed_names`
+allowed-idents-below-min-chars = ["x", "y", "z", "i", "j", "k", "n", "tx", "rx", "id", "ok"]
+
+# Doc comment line length for `doc_markdown`
+doc-valid-idents = [
+    "GitHub",
+    "GitLab",
+    "BitBucket",
+    "JavaScript",
+    "TypeScript",
+    "WebSocket",
+    "WebSockets",
+    "JSON-RPC",
+    "EVM",
+    "ABI",
+    "RLP",
+    "RPC",
+    "HTTP",
+    "HTTPS",
+    "URL",
+    "URLs",
+    "URI",
+    "URIs",
+    "API",
+    "APIs",
+    "CLI",
+    "TUI",
+    "TOML",
+    "YAML",
+    "JSON",
+    "gwei",
+    "ETH",
+    "ERC-20",
+    "ERC-721",
+    "EIP-1559",
+    "Railguard",
+]
+
+# Threshold for trivially_copy_pass_by_ref
+trivial-copy-size-limit = 16
+
+# Threshold for pass_by_value
+pass-by-value-size-limit = 256
+
+# Threshold for large_enum_variant
+enum-variant-size-threshold = 200
+
+# Allow panic in tests
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+allow-panic-in-tests = true
+allow-dbg-in-tests = true

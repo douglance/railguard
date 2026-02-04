@@ -1,0 +1,241 @@
+---
+title: Policy Engine
+description: Deep dive into how Railguard inspects tool calls and enforces security policy.
+---
+
+The Policy Engine (`rg-policy` crate) is the heart of Railguard. It takes a tool call and returns a `Verdict`: `Allow`, `Deny`, or `Ask`.
+
+## Inspection Flow
+
+```
+Tool Call → Tool Check → Secret Scan → Command Check → Path Check → Network Check → Verdict
+```
+
+The first check that fails results in an immediate verdict.
+
+## 1. Tool-Level Check
+
+First, Railguard checks if the tool name matches any permission pattern:
+
+```rust
+// Deny patterns checked first
+if tools.deny.iter().any(|p| glob_match(p, tool_name)) {
+    return Verdict::Deny("Tool blocked by policy");
+}
+
+// Ask patterns
+if tools.ask.iter().any(|p| glob_match(p, tool_name)) {
+    return Verdict::Ask("Tool requires confirmation");
+}
+
+// Allow patterns skip further inspection
+if tools.allow.iter().any(|p| glob_match(p, tool_name)) {
+    return Verdict::Allow;
+}
+```
+
+## 2. Secret Scanning
+
+Railguard scans tool input for secrets:
+
+### Built-in Detectors
+
+| Detector | Pattern |
+|----------|---------|
+| AWS Access Key | `AKIA[0-9A-Z]{16}` |
+| GitHub Token | `ghp_[a-zA-Z0-9]{36}`, `gho_...`, `ghs_...` |
+| OpenAI Key | `sk-[a-zA-Z0-9]{48}` |
+| Private Key | `-----BEGIN.*PRIVATE KEY-----` |
+| High Entropy | Shannon entropy > 4.5 for 20+ char strings |
+
+### Scanning Behavior by Tool
+
+| Tool | Fields Scanned |
+|------|----------------|
+| `Bash` | `command` |
+| `Write` | `content` |
+| `Edit` | `old_string`, `new_string` |
+| `Task` | `prompt` |
+| `WebFetch` | `url` (for domains) |
+
+## 3. Command Pattern Matching
+
+For `Bash` tool, Railguard checks the command against dangerous patterns:
+
+```rust
+// Check block patterns
+for pattern in &policy.commands.block_patterns {
+    if regex_match(pattern, command) {
+        // Check if overridden by allow pattern
+        if !policy.commands.allow_patterns.iter().any(|a| regex_match(a, command)) {
+            return Verdict::Deny(format!("Dangerous command: {}", pattern));
+        }
+    }
+}
+```
+
+### Built-in Block Patterns
+
+| Pattern | Matches |
+|---------|---------|
+| `rm\s+-rf\s+[/~]` | `rm -rf /`, `rm -rf ~` |
+| `:(){ :\|:& };:` | Fork bomb |
+| `mkfs\.` | Disk format |
+| `dd\s+if=` | Raw disk write |
+| `chmod\s+777` | Dangerous permissions |
+
+## 4. Path Protection
+
+For `Read`, `Write`, and `Edit` tools, Railguard checks if the path matches protected patterns:
+
+```rust
+for pattern in &policy.protected_paths.blocked {
+    if glob_match(pattern, file_path) {
+        return Verdict::Deny(format!("Protected path: {}", pattern));
+    }
+}
+```
+
+### Built-in Protected Paths
+
+- `**/.env`, `**/.env.*`
+- `**/*.pem`, `**/*.key`
+- `**/.ssh/**`
+- `**/.aws/credentials`
+- `**/.gnupg/**`
+
+## 5. Network Domain Checking
+
+For `Bash` (URLs in commands) and `WebFetch` tools, Railguard checks for exfiltration domains:
+
+```rust
+for domain in &policy.network.block_domains {
+    if url.host().contains(domain) {
+        return Verdict::Deny(format!("Blocked domain: {}", domain));
+    }
+}
+```
+
+## Fail-Closed Architecture
+
+The Policy Engine wraps all inspection in a panic catcher:
+
+```rust
+pub fn inspect(input: &HookInput, policy: &RuntimePolicy) -> Verdict {
+    panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        inspect_inner(input, policy)
+    }))
+    .unwrap_or_else(|_| Verdict::Deny("Internal error - fail closed"))
+}
+```
+
+**Any panic becomes a `Deny` verdict.** This is intentional—security-critical code must never silently succeed when something goes wrong.
+
+## Verdict Types
+
+```rust
+pub enum Verdict {
+    Allow,
+    Deny { reason: String },
+    Ask { message: String },
+}
+```
+
+| Verdict | Exit Code | Behavior |
+|---------|-----------|----------|
+| `Allow` | 0 | Tool executes normally |
+| `Ask` | 0 | User prompted for confirmation |
+| `Deny` | 2 | Tool blocked with reason |
+
+## Performance
+
+The Policy Engine is optimized for minimal overhead:
+
+| Operation | Target | Implementation |
+|-----------|--------|----------------|
+| Pattern matching | O(n) patterns | Pre-compiled regex at startup |
+| Glob matching | O(n) patterns | `glob` crate with caching |
+| Secret detection | O(n) detectors | Compiled regex patterns |
+| Total inspection | < 1ms p99 | All patterns pre-compiled |
+
+## Tool-Specific Inspection
+
+### Bash
+
+```rust
+struct BashInput {
+    command: String,
+}
+```
+
+Inspections:
+1. Command pattern matching (block/allow)
+2. Secret scanning in command
+3. URL extraction and network check
+
+### Write
+
+```rust
+struct WriteInput {
+    file_path: String,
+    content: String,
+}
+```
+
+Inspections:
+1. Path protection check
+2. Secret scanning in content
+
+### Edit
+
+```rust
+struct EditInput {
+    file_path: String,
+    old_string: String,
+    new_string: String,
+}
+```
+
+Inspections:
+1. Path protection check
+2. Secret scanning in old_string and new_string
+
+### Read
+
+```rust
+struct ReadInput {
+    file_path: String,
+}
+```
+
+Inspections:
+1. Path protection check
+
+### WebFetch
+
+```rust
+struct WebFetchInput {
+    url: String,
+}
+```
+
+Inspections:
+1. Network domain check
+
+### MCP Tools
+
+```rust
+// Tool name format: mcp__<server>__<tool>
+// e.g., mcp__github__create_issue
+```
+
+Inspections:
+1. Server-level permissions
+2. Tool-level permissions
+3. Parameter scanning based on tool type
+
+## Next Steps
+
+- [Configuration](/docs/configuration) — Config file reference
+- [CLI Reference](/docs/cli) — Command-line options
+- [API Reference](/docs/api) — Rust crate documentation

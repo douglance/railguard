@@ -1,0 +1,73 @@
+---
+title: Introduction
+description: Railguard is a Claude Code hook that protects against secrets leakage, dangerous commands, and unauthorized tool use.
+---
+
+## What is Railguard?
+
+Railguard is **The Firewall for Claude Code**. It sits between Claude and your system, inspecting every tool invocation before it executes.
+
+```
+┌──────────────┐     ┌─────────────┐     ┌──────────────────┐
+│  Claude Code │ ──► │  Railguard  │ ──► │  Tool Execution  │
+│  (LLM)       │     │  (Inspect)  │     │  (Bash, Write..) │
+└──────────────┘     └─────────────┘     └──────────────────┘
+                           │
+                           ▼
+                     Block or Allow
+```
+
+## Why Railguard?
+
+### The Problem
+
+Claude Code has powerful capabilities that can be dangerous if misused:
+- Bash commands can leak secrets via curl, environment variables, or error messages
+- File operations can expose `.env`, credentials, or private keys
+- Network requests can exfiltrate data to unauthorized domains
+
+### The Solution
+
+Railguard performs inspection on every tool call:
+
+1. **Check tool permissions** — Is this tool allowed, denied, or requires confirmation?
+2. **Scan for secrets** — AWS keys, GitHub tokens, private keys, high-entropy strings
+3. **Block dangerous commands** — `rm -rf /`, fork bombs, disk operations
+4. **Protect sensitive paths** — `.ssh/`, `.env`, `*.pem`, credentials files
+5. **Prevent exfiltration** — Block ngrok, pastebin, webhook.site
+
+All with **< 1ms latency** and a **fail-closed** architecture.
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Secret Detection** | Blocks AWS keys, GitHub tokens, OpenAI keys, private keys |
+| **Dangerous Commands** | Prevents `rm -rf /`, fork bombs, disk writes |
+| **Protected Paths** | Blocks access to `.ssh/`, `.aws/credentials`, `.env` |
+| **Network Protection** | Blocks exfiltration to ngrok, pastebin, webhook.site |
+| **Tool Permissions** | Allow/deny/ask rules for any tool or MCP server |
+| **Sub-ms Latency** | Pre-compiled patterns, won't slow your workflow |
+
+## Architecture
+
+Railguard is a Rust Cargo workspace:
+
+| Crate | Purpose |
+|-------|---------|
+| `bin/rg` | CLI: hook execution, install/uninstall, lint, test |
+| `rg-types` | Shared types: Config, Verdict, HookInput |
+| `rg-policy` | Policy engine: secret scanning, command blocking |
+
+## Who is Railguard for?
+
+- **Developers** using Claude Code for daily work
+- **Teams** wanting guardrails on AI-assisted development
+- **Security-conscious** organizations with compliance requirements
+
+## Next Steps
+
+- [Getting Started](/docs/getting-started) — Install and configure Railguard
+- [Configuration](/docs/configuration) — Write your `railguard.toml` policy
+- [CLI Reference](/docs/cli) — All command-line options
+- [Policy Engine](/docs/policy-engine) — How inspection works

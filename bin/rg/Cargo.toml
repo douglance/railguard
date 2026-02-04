@@ -1,0 +1,36 @@
+[package]
+name = "railguard"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Railguard CLI - Claude Code security hook for LLM protection"
+readme = "../../README.md"
+
+[[bin]]
+name = "railguard"
+path = "src/main.rs"
+
+[dependencies]
+rg-types.workspace = true
+rg-policy.workspace = true
+
+clap.workspace = true
+eyre.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+toml.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+regex.workspace = true
+glob.workspace = true
+dirs-next = "2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true

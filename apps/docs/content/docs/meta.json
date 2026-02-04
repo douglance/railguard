@@ -1,0 +1,12 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "getting-started",
+    "configuration",
+    "policy-engine",
+    "cli",
+    "---",
+    "api"
+  ]
+}

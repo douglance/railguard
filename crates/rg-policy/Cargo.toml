@@ -1,0 +1,25 @@
+[package]
+name = "rg-policy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories = ["development-tools"]
+description = "Policy engine for Railguard: secret scanning, dangerous command detection, path protection"
+
+[dependencies]
+rg-types.workspace = true
+
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+regex.workspace = true
+glob.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true

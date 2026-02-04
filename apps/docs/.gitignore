@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+.open-next/
+out/
+
+# Generated types
+.source/
+
+# Misc
+.DS_Store
+*.log

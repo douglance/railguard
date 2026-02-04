@@ -1,0 +1,128 @@
+# cargo-deny configuration
+# https://embarkstudios.github.io/cargo-deny/
+#
+# Install: cargo install cargo-deny
+# Run: cargo deny check
+
+[graph]
+# Target platforms to check
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+]
+
+# =============================================================================
+# Advisories - Check for known security vulnerabilities
+# =============================================================================
+[advisories]
+version = 2
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+
+# How to handle crates with active advisories
+vulnerability = "deny"
+
+# How to handle crates that have been yanked
+yanked = "warn"
+
+# Ignore specific advisories (use sparingly, document why)
+ignore = [
+    # Example: "RUSTSEC-2020-0001", # reason for ignoring
+]
+
+# =============================================================================
+# Licenses - Ensure dependency licenses are acceptable
+# =============================================================================
+[licenses]
+version = 2
+
+# Be strict about license requirements
+unlicensed = "deny"
+copyleft = "warn"
+
+# Allowed licenses (permissive open source)
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "0BSD",
+    "CC0-1.0",
+    "Unlicense",
+    "MPL-2.0",  # Weak copyleft, file-level only
+]
+
+# Confidence threshold for detecting licenses
+confidence-threshold = 0.8
+
+# Crate-specific license exceptions
+exceptions = [
+    # Example: { allow = ["LGPL-3.0"], crate = "some-crate" }
+]
+
+# Clarify licenses for crates with ambiguous licensing
+[[licenses.clarify]]
+crate = "ring"
+expression = "MIT AND ISC AND OpenSSL"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 }
+]
+
+# =============================================================================
+# Bans - Forbid specific crates or features
+# =============================================================================
+[bans]
+# Deny multiple versions of the same crate
+multiple-versions = "warn"
+
+# Deny wildcard dependencies
+wildcards = "deny"
+
+# Allow build dependencies to have duplicate versions
+workspace-default-features = "allow"
+external-default-features = "allow"
+
+# Highlight specific crate paths when duplicates found
+highlight = "all"
+
+# Deny specific crates
+deny = [
+    # Known problematic crates
+    { crate = "openssl", reason = "Use rustls instead for TLS" },
+    { crate = "openssl-sys", reason = "Use rustls instead for TLS" },
+
+    # Deprecated/unmaintained crates
+    { crate = "atty", reason = "Use std::io::IsTerminal or is-terminal instead" },
+    { crate = "ansi_term", reason = "Use owo-colors or colored instead" },
+]
+
+# Allow specific crates (override deny if needed)
+allow = [
+    # Example: { crate = "allowed-crate" }
+]
+
+# Skip checking specific crates for duplicates
+skip = [
+    # Example: { crate = "windows-sys", reason = "Many versions in ecosystem" }
+]
+
+# =============================================================================
+# Sources - Restrict where crates can be fetched from
+# =============================================================================
+[sources]
+# Only allow crates from these sources
+unknown-registry = "deny"
+unknown-git = "warn"
+
+# Allow crates.io
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+
+# Allow specific git repositories (add as needed)
+allow-git = [
+    # Example: "https://github.com/example/repo"
+]

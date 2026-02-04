@@ -1,0 +1,13 @@
+# Rust Toolchain Configuration
+# https://rust-lang.github.io/rustup/overrides.html
+
+[toolchain]
+# Pin to stable channel for reproducible builds
+channel = "stable"
+
+# Components to install with the toolchain
+components = [
+    "rustfmt",       # Code formatter
+    "clippy",        # Linter
+    "rust-analyzer", # IDE support
+]

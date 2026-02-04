@@ -1,0 +1,42 @@
+# Rust
+/target/
+**/target/
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Test artifacts
+*.log
+coverage/
+
+# Archived plans (not tracked)
+.archive/
+
+# AI agent/editor configs (local only)
+.agent/
+.agents/
+.claude/
+.codex/
+.gemini/
+.github/
+.kiro/
+.opencode/
+.windsurf/
+
+# Node (for apps/docs)
+node_modules/
+.next/
+.turbo/

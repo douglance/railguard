@@ -1,0 +1,149 @@
+# Railguard Configuration - Claude Code LLM Protection Hook
+#
+# This file configures Railguard's protection policies for Claude Code.
+# Copy to `railguard.toml` and customize for your needs.
+
+# =============================================================================
+# Tool-Level Permissions (checked BEFORE parameter inspection)
+# =============================================================================
+# These patterns control which tools are allowed, denied, or require confirmation
+# at the tool level, before any parameter checking occurs.
+# Uses glob patterns: "*" matches any sequence, "?" matches single char
+
+[tools]
+# Tools that always proceed without inspection
+allow = []
+
+# Tools that are completely blocked
+deny = []
+
+# Tools that require user confirmation before proceeding
+ask = []
+
+# MCP (Model Context Protocol) server-specific permissions
+[tools.mcp]
+# Allow all tools from these MCP servers
+allow_servers = []
+
+# Block all tools from these MCP servers
+deny_servers = []
+
+# Require confirmation for tools from these MCP servers
+ask_servers = []
+
+# =============================================================================
+# Policy Configuration
+# =============================================================================
+[policy]
+# Operation mode:
+# - "strict": Block actions that violate policy (default)
+# - "monitor": Log violations but allow all actions
+mode = "strict"
+
+# Fail closed on internal errors (default: true)
+# When true, any internal error blocks the action
+fail_closed = true
+
+# =============================================================================
+# Secret Detection
+# =============================================================================
+[policy.secrets]
+enabled = true
+
+# Entropy threshold for generic secret detection (default: 4.5)
+# Higher values = fewer false positives, lower values = more sensitive
+entropy_threshold = 4.5
+
+# Specific secret types to detect
+detect_aws_keys = true        # AKIA..., ASIA..., etc.
+detect_github_tokens = true   # ghp_..., ghs_..., github_pat_...
+detect_openai_keys = true     # sk-...
+detect_private_keys = true    # -----BEGIN PRIVATE KEY-----
+
+# =============================================================================
+# Dangerous Command Detection
+# =============================================================================
+[policy.commands]
+enabled = true
+
+# Regex patterns to block (matched against Bash commands)
+block_patterns = [
+    # Destructive file operations
+    "rm\\s+-rf\\s+[/~]",           # rm -rf / or rm -rf ~
+    ">\\s*/dev/sd[a-z]",           # Write to disk device
+    "mkfs\\.",                      # Format filesystem
+    "dd\\s+if=.+of=/dev/",         # Raw disk write
+
+    # Dangerous permissions
+    "chmod\\s+-R\\s+777\\s+/",     # World-writable root
+
+    # Fork bombs and system attacks
+    ":\\(\\)\\s*\\{\\s*:\\|:&\\s*\\}\\s*;",  # Fork bomb
+]
+
+# Patterns that override blocks (allow specific safe cases)
+allow_patterns = [
+    "rm\\s+-rf\\s+node_modules",   # Allow cleaning node_modules
+    "rm\\s+-rf\\s+\\.next",        # Allow cleaning Next.js build
+    "rm\\s+-rf\\s+dist",           # Allow cleaning dist folder
+    "rm\\s+-rf\\s+target",         # Allow cleaning Rust target
+]
+
+# =============================================================================
+# Protected Path Access
+# =============================================================================
+[policy.protected_paths]
+enabled = true
+
+# Glob patterns for paths that should never be read/written
+blocked = [
+    # Environment and secrets
+    "**/.env",
+    "**/.env.*",
+
+    # Private keys
+    "**/*.pem",
+    "**/*.key",
+    "**/id_rsa",
+    "**/id_ed25519",
+    "**/id_ecdsa",
+
+    # SSH configuration
+    "**/.ssh/**",
+
+    # Cloud credentials
+    "**/.aws/credentials",
+    "**/.azure/**",
+    "**/.gcloud/**",
+
+    # Git credentials (but not .git/config which may be needed)
+    "**/.git-credentials",
+    "**/.netrc",
+]
+
+# =============================================================================
+# Network Exfiltration Prevention
+# =============================================================================
+[policy.network]
+enabled = true
+
+# Domains to block (prevents data exfiltration to paste sites, etc.)
+block_domains = [
+    # Paste sites
+    "pastebin.com",
+    "hastebin.com",
+    "paste.ee",
+    "ghostbin.com",
+    "dpaste.org",
+
+    # Tunneling services
+    "ngrok.io",
+    "ngrok.app",
+    "localtunnel.me",
+
+    # Request capture services
+    "requestbin.com",
+    "hookbin.com",
+    "webhook.site",
+    "pipedream.net",
+]

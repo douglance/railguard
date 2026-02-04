@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* International Orange Theme for Fumadocs */
+/* Primary color: #FF4F00 (International Orange) = HSL 19 100% 50% */
+
+:root {
+  /* Light mode colors */
+  --fd-background: 0 0% 98%;
+  --fd-foreground: 0 0% 9%;
+  --fd-muted: 30 10% 94%;
+  --fd-muted-foreground: 0 0% 40%;
+  --fd-popover: 0 0% 100%;
+  --fd-popover-foreground: 0 0% 9%;
+  --fd-card: 30 10% 96%;
+  --fd-card-foreground: 0 0% 9%;
+  --fd-border: 30 15% 88%;
+  /* International Orange as primary */
+  --fd-primary: 19 100% 50%;
+  --fd-primary-foreground: 0 0% 100%;
+  --fd-secondary: 30 15% 92%;
+  --fd-secondary-foreground: 0 0% 9%;
+  --fd-accent: 30 20% 90%;
+  --fd-accent-foreground: 0 0% 9%;
+  --fd-ring: 19 100% 50%;
+}
+
+.dark {
+  /* Dark mode colors - optimized for orange theme */
+  --fd-background: 0 0% 6%;
+  --fd-foreground: 0 0% 95%;
+  --fd-muted: 0 0% 12%;
+  --fd-muted-foreground: 0 0% 60%;
+  --fd-popover: 0 0% 8%;
+  --fd-popover-foreground: 0 0% 92%;
+  --fd-card: 0 0% 9%;
+  --fd-card-foreground: 0 0% 95%;
+  --fd-border: 0 0% 16%;
+  /* International Orange as primary */
+  --fd-primary: 19 100% 50%;
+  --fd-primary-foreground: 0 0% 100%;
+  --fd-secondary: 0 0% 14%;
+  --fd-secondary-foreground: 0 0% 95%;
+  --fd-accent: 19 60% 18%;
+  --fd-accent-foreground: 0 0% 95%;
+  --fd-ring: 19 100% 50%;
+}
+
+/* Custom scrollbar for dark mode matching the theme */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(0 0% 10%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 25%);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(19 100% 50%);
+}
+
+/* Enhance link styling with orange accents */
+.prose a {
+  text-decoration-color: hsl(19 100% 50% / 0.4);
+}
+
+.prose a:hover {
+  text-decoration-color: hsl(19 100% 50%);
+}
+
+/* Selection highlight with orange tint */
+::selection {
+  background-color: hsl(19 100% 50% / 0.25);
+}
+
+.dark ::selection {
+  background-color: hsl(19 100% 50% / 0.35);
+}
+
+/* ===== Syntax Highlighting - Orange Theme ===== */
+/* Custom theme based on Atom One Dark with International Orange (#FF4F00) accents */
+
+/* Light mode code block background */
+:root {
+  --shiki-light-bg: #fafafa !important;
+}
+
+/* Dark mode code block background - pure black */
+.dark {
+  --shiki-dark-bg: #0a0a0a !important;
+}
+
+/* Code block container styling */
+pre:has(code) {
+  border: 1px solid #e0e0e0;
+}
+
+.dark pre:has(code) {
+  border: 1px solid #2a2a2a;
+}
+
+/* Inline code styling - orange text on dark orange background */
+:not(pre) > code {
+  background-color: #ffd9bf;
+  color: #cc3300;
+  padding: 0.15em 0.4em;
+  border-radius: 0.25em;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.dark :not(pre) > code {
+  background-color: #1a1010;
+  color: #FF4F00;
+}
+
+/* Code block line highlighting with orange accent */
+pre code .line.highlighted {
+  background-color: #fff5eb;
+  border-left: 3px solid #FF4F00;
+  margin-left: -3px;
+}
+
+.dark pre code .line.highlighted {
+  background-color: #1a1208;
+  border-left: 3px solid #FF4F00;
+}
+
+/* Diff styling */
+pre code .line.diff.add {
+  background-color: #e6f5e6;
+}
+
+pre code .line.diff.remove {
+  background-color: #f5e6e6;
+}
+
+.dark pre code .line.diff.add {
+  background-color: #0d1a0d;
+}
+
+.dark pre code .line.diff.remove {
+  background-color: #1a0d0d;
+}
+
+/* Word highlighting with orange */
+pre code .word {
+  background-color: #ffe0cc;
+  border-radius: 0.25em;
+  padding: 0.1em 0.2em;
+}
+
+.dark pre code .word {
+  background-color: #331a00;
+}

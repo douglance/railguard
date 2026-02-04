@@ -1,0 +1,244 @@
+---
+title: Configuration
+description: Complete reference for the railguard.toml configuration file.
+---
+
+Railguard is configured via a TOML file, typically named `railguard.toml`.
+
+## Config File Location
+
+Railguard searches for configuration in this order:
+
+1. Explicit `-c` flag
+2. `railguard.toml` in current directory
+3. `~/.config/railguard/railguard.toml`
+4. Built-in defaults (all scanners enabled)
+
+## Full Example
+
+```toml
+[policy]
+mode = "strict"           # "strict" blocks, "monitor" logs only
+fail_closed = true        # Panics become Deny (security-critical)
+
+[policy.secrets]
+enabled = true
+entropy_threshold = 4.5   # High-entropy string detection
+detect_aws_keys = true
+detect_github_tokens = true
+detect_openai_keys = true
+detect_private_keys = true
+# Custom patterns (regex)
+patterns = [
+    { name = "Slack Token", pattern = "xox[baprs]-[0-9a-zA-Z-]+" }
+]
+
+[policy.commands]
+enabled = true
+# Patterns that block commands (regex)
+block_patterns = [
+    "rm\\s+-rf\\s+[/~]",     # rm -rf / or ~
+    ":(){ :|:& };:",         # Fork bomb
+    "mkfs\\.",               # Format disk
+    "dd\\s+if=",             # Raw disk write
+]
+# Override blocks for specific safe patterns
+allow_patterns = [
+    "rm\\s+-rf\\s+node_modules",
+    "rm\\s+-rf\\s+\\.next",
+]
+
+[policy.protected_paths]
+enabled = true
+# Glob patterns for sensitive files
+blocked = [
+    "**/.env",
+    "**/.env.*",
+    "**/*.pem",
+    "**/*.key",
+    "**/.ssh/**",
+    "**/.aws/credentials",
+    "**/.gnupg/**",
+]
+
+[policy.network]
+enabled = true
+# Domains that indicate data exfiltration
+block_domains = [
+    "pastebin.com",
+    "ngrok.io",
+    "webhook.site",
+    "requestbin.com",
+    "hookbin.com",
+]
+
+# Tool-level permissions (glob patterns)
+[tools]
+allow = []              # Skip all inspection for these tools
+deny = []               # Block completely
+ask = []                # Require user confirmation
+
+# MCP server permissions
+[tools.mcp]
+allow_servers = []      # Allow all tools from these servers
+deny_servers = []       # Block all tools from these servers
+ask_servers = []        # Prompt for all tools from these servers
+```
+
+## Policy Section
+
+```toml
+[policy]
+mode = "strict"
+fail_closed = true
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `mode` | String | `"strict"` | `"strict"` blocks violations, `"monitor"` logs only |
+| `fail_closed` | bool | `true` | Any panic becomes Deny (security-critical) |
+
+### Modes
+
+- **`strict`** — Block tool calls that violate policy
+- **`monitor`** — Log violations but allow through (for testing)
+
+## Secrets Detection
+
+```toml
+[policy.secrets]
+enabled = true
+entropy_threshold = 4.5
+detect_aws_keys = true
+detect_github_tokens = true
+detect_openai_keys = true
+detect_private_keys = true
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | bool | `true` | Enable secret scanning |
+| `entropy_threshold` | f64 | `4.5` | Shannon entropy threshold for high-entropy strings |
+| `detect_aws_keys` | bool | `true` | Detect `AKIA...` patterns |
+| `detect_github_tokens` | bool | `true` | Detect `ghp_`, `gho_`, etc. |
+| `detect_openai_keys` | bool | `true` | Detect `sk-...` patterns |
+| `detect_private_keys` | bool | `true` | Detect `-----BEGIN...PRIVATE KEY-----` |
+
+### Custom Patterns
+
+Add custom secret patterns:
+
+```toml
+[policy.secrets]
+patterns = [
+    { name = "Slack Token", pattern = "xox[baprs]-[0-9a-zA-Z-]+" },
+    { name = "Stripe Key", pattern = "sk_live_[0-9a-zA-Z]{24}" },
+]
+```
+
+## Command Blocking
+
+```toml
+[policy.commands]
+enabled = true
+block_patterns = ["rm\\s+-rf\\s+[/~]"]
+allow_patterns = ["rm\\s+-rf\\s+node_modules"]
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | bool | `true` | Enable command pattern blocking |
+| `block_patterns` | String[] | (built-in) | Regex patterns to block |
+| `allow_patterns` | String[] | `[]` | Override blocks for specific patterns |
+
+### Built-in Block Patterns
+
+- `rm -rf /` or `rm -rf ~` (recursive delete)
+- Fork bombs
+- `mkfs.` (disk format)
+- `dd if=` (raw disk write)
+- `chmod 777` (dangerous permissions)
+
+## Protected Paths
+
+```toml
+[policy.protected_paths]
+enabled = true
+blocked = ["**/.env", "**/.ssh/**"]
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | bool | `true` | Enable path protection |
+| `blocked` | String[] | (built-in) | Glob patterns for protected paths |
+
+### Built-in Protected Paths
+
+- `**/.env`, `**/.env.*`
+- `**/*.pem`, `**/*.key`
+- `**/.ssh/**`
+- `**/.aws/credentials`
+- `**/.gnupg/**`
+
+## Network Protection
+
+```toml
+[policy.network]
+enabled = true
+block_domains = ["pastebin.com", "ngrok.io"]
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | bool | `true` | Enable network domain blocking |
+| `block_domains` | String[] | (built-in) | Domains to block |
+
+### Built-in Blocked Domains
+
+- `pastebin.com`
+- `ngrok.io`
+- `webhook.site`
+- `requestbin.com`
+
+## Tool Permissions
+
+```toml
+[tools]
+allow = ["Glob", "Grep"]        # Skip inspection
+deny = ["mcp__dangerous__*"]    # Block completely
+ask = ["mcp__github__*"]        # Prompt user
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `allow` | String[] | Tools that skip all inspection |
+| `deny` | String[] | Tools that are always blocked |
+| `ask` | String[] | Tools that require user confirmation |
+
+Patterns support glob syntax: `*` matches any characters, `?` matches single character.
+
+### MCP Server Permissions
+
+```toml
+[tools.mcp]
+allow_servers = ["filesystem"]
+deny_servers = ["dangerous-server"]
+ask_servers = ["github"]
+```
+
+MCP tools use format `mcp__<server>__<tool>`. Server-level rules apply to all tools from that server.
+
+## Evaluation Order
+
+1. **Tool-level check** — Is this tool allowed/denied/ask?
+2. **Parameter inspection** — If not early-exit:
+   - Secret scanning
+   - Command pattern matching
+   - Path protection
+   - Network domain checking
+3. **Verdict** — Allow, Deny, or Ask
+
+## Next Steps
+
+- [Policy Engine](/docs/policy-engine) — How inspection works
+- [CLI Reference](/docs/cli) — Command-line options

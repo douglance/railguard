@@ -1,0 +1,171 @@
+---
+title: CLI Reference
+description: Complete reference for the Railguard command-line interface.
+---
+
+Railguard is invoked via the `railguard` command.
+
+## Synopsis
+
+```bash
+railguard [OPTIONS] <COMMAND>
+
+Commands:
+  install    Configure Claude Code to use Railguard
+  uninstall  Remove Railguard from Claude Code
+  lint       Validate configuration file
+  test       Test policy against specific input
+  hook       Run as hook (used internally by Claude Code)
+
+Options:
+  -c, --config <FILE>  Path to config file [default: railguard.toml]
+  -h, --help           Print help
+  -V, --version        Print version
+```
+
+## Commands
+
+### `railguard install`
+
+Configure Claude Code to use Railguard as a `preToolUse` hook.
+
+```bash
+railguard install
+```
+
+This modifies `~/.claude/settings.json` to add:
+
+```json
+{
+  "hooks": {
+    "preToolUse": [
+      {
+        "matcher": "*",
+        "command": "railguard hook"
+      }
+    ]
+  }
+}
+```
+
+### `railguard uninstall`
+
+Remove Railguard from Claude Code's hook configuration.
+
+```bash
+railguard uninstall
+```
+
+### `railguard lint`
+
+Validate your configuration file for syntax errors and invalid patterns.
+
+```bash
+railguard lint
+railguard lint -c custom.toml
+```
+
+### `railguard test`
+
+Test your policy against a specific tool input without running Claude Code.
+
+```bash
+railguard test <TOOL_NAME> '<JSON_INPUT>'
+```
+
+**Examples:**
+
+```bash
+# Test Bash command
+railguard test Bash '{"command":"ls -la"}'
+
+# Test file write
+railguard test Write '{"file_path":"/tmp/test.txt","content":"hello"}'
+
+# Test with secrets
+railguard test Bash '{"command":"echo $AWS_SECRET_ACCESS_KEY"}'
+
+# Test protected path
+railguard test Read '{"file_path":"~/.ssh/id_rsa"}'
+
+# Test network
+railguard test WebFetch '{"url":"https://pastebin.com/raw/abc123"}'
+```
+
+**Output:**
+
+```
+ALLOWED
+```
+
+or
+
+```
+DENIED
+Reason: Dangerous command pattern: rm -rf with root path
+```
+
+### `railguard hook`
+
+Run as a Claude Code hook. Reads JSON from stdin, writes verdict to stdout.
+
+```bash
+echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | railguard hook
+```
+
+**Input Format:**
+
+```json
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "ls -la"
+  }
+}
+```
+
+**Exit Codes:**
+
+| Code | Verdict | Behavior |
+|------|---------|----------|
+| 0 | Allow | Tool executes normally |
+| 0 | Ask | User prompted (with `hookSpecificOutput`) |
+| 2 | Deny | Tool blocked (with `hookSpecificOutput`) |
+
+## Global Options
+
+### `--config, -c`
+
+Specify the path to your configuration file.
+
+```bash
+railguard -c ./custom/railguard.toml lint
+railguard --config /etc/railguard.toml test Bash '{"command":"ls"}'
+```
+
+**Config Search Order:**
+
+1. Explicit `-c` flag
+2. `railguard.toml` in current directory
+3. `~/.config/railguard/railguard.toml`
+4. Built-in defaults
+
+## Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `RUST_LOG` | Log level (`debug`, `info`, `warn`, `error`) |
+| `RAILGUARD_CONFIG` | Alternative to `-c` flag |
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success (or Allow/Ask verdict for hook) |
+| 1 | Configuration error or general failure |
+| 2 | Deny verdict (hook mode only) |
+
+## Next Steps
+
+- [Configuration](/docs/configuration) — Config file reference
+- [Policy Engine](/docs/policy-engine) — How inspection works
