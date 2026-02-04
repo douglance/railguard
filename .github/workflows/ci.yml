@@ -55,7 +55,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   msrv:
-    name: MSRV Check (${{ env.MSRV }})
+    name: MSRV Check (1.75.0)
     runs-on: ubuntu-latest
     env:
       MSRV: "1.75.0"
