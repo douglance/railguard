@@ -1,36 +1,36 @@
 ---
 title: CLI Reference
-description: Complete reference for the Railguard command-line interface.
+description: Complete reference for the Railgun command-line interface.
 ---
 
-Railguard is invoked via the `railguard` command.
+Railgun is invoked via the `railgun` command.
 
 ## Synopsis
 
 ```bash
-railguard [OPTIONS] <COMMAND>
+railgun [OPTIONS] <COMMAND>
 
 Commands:
-  install    Configure Claude Code to use Railguard
-  uninstall  Remove Railguard from Claude Code
+  install    Configure Claude Code to use Railgun
+  uninstall  Remove Railgun from Claude Code
   lint       Validate configuration file
   test       Test policy against specific input
   hook       Run as hook (used internally by Claude Code)
 
 Options:
-  -c, --config <FILE>  Path to config file [default: railguard.toml]
+  -c, --config <FILE>  Path to config file [default: railgun.toml]
   -h, --help           Print help
   -V, --version        Print version
 ```
 
 ## Commands
 
-### `railguard install`
+### `railgun install`
 
-Configure Claude Code to use Railguard as a `preToolUse` hook.
+Configure Claude Code to use Railgun as a `preToolUse` hook.
 
 ```bash
-railguard install
+railgun install
 ```
 
 This modifies `~/.claude/settings.json` to add:
@@ -41,55 +41,55 @@ This modifies `~/.claude/settings.json` to add:
     "preToolUse": [
       {
         "matcher": "*",
-        "command": "railguard hook"
+        "command": "railgun hook"
       }
     ]
   }
 }
 ```
 
-### `railguard uninstall`
+### `railgun uninstall`
 
-Remove Railguard from Claude Code's hook configuration.
+Remove Railgun from Claude Code's hook configuration.
 
 ```bash
-railguard uninstall
+railgun uninstall
 ```
 
-### `railguard lint`
+### `railgun lint`
 
 Validate your configuration file for syntax errors and invalid patterns.
 
 ```bash
-railguard lint
-railguard lint -c custom.toml
+railgun lint
+railgun lint -c custom.toml
 ```
 
-### `railguard test`
+### `railgun test`
 
 Test your policy against a specific tool input without running Claude Code.
 
 ```bash
-railguard test <TOOL_NAME> '<JSON_INPUT>'
+railgun test <TOOL_NAME> '<JSON_INPUT>'
 ```
 
 **Examples:**
 
 ```bash
 # Test Bash command
-railguard test Bash '{"command":"ls -la"}'
+railgun test Bash '{"command":"ls -la"}'
 
 # Test file write
-railguard test Write '{"file_path":"/tmp/test.txt","content":"hello"}'
+railgun test Write '{"file_path":"/tmp/test.txt","content":"hello"}'
 
 # Test with secrets
-railguard test Bash '{"command":"echo $AWS_SECRET_ACCESS_KEY"}'
+railgun test Bash '{"command":"echo $AWS_SECRET_ACCESS_KEY"}'
 
 # Test protected path
-railguard test Read '{"file_path":"~/.ssh/id_rsa"}'
+railgun test Read '{"file_path":"~/.ssh/id_rsa"}'
 
 # Test network
-railguard test WebFetch '{"url":"https://pastebin.com/raw/abc123"}'
+railgun test WebFetch '{"url":"https://pastebin.com/raw/abc123"}'
 ```
 
 **Output:**
@@ -105,12 +105,12 @@ DENIED
 Reason: Dangerous command pattern: rm -rf with root path
 ```
 
-### `railguard hook`
+### `railgun hook`
 
 Run as a Claude Code hook. Reads JSON from stdin, writes verdict to stdout.
 
 ```bash
-echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | railguard hook
+echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | railgun hook
 ```
 
 **Input Format:**
@@ -139,15 +139,15 @@ echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | railguard hook
 Specify the path to your configuration file.
 
 ```bash
-railguard -c ./custom/railguard.toml lint
-railguard --config /etc/railguard.toml test Bash '{"command":"ls"}'
+railgun -c ./custom/railgun.toml lint
+railgun --config /etc/railgun.toml test Bash '{"command":"ls"}'
 ```
 
 **Config Search Order:**
 
 1. Explicit `-c` flag
-2. `railguard.toml` in current directory
-3. `~/.config/railguard/railguard.toml`
+2. `railgun.toml` in current directory
+3. `~/.config/railgun/railgun.toml`
 4. Built-in defaults
 
 ## Environment Variables
@@ -155,7 +155,7 @@ railguard --config /etc/railguard.toml test Bash '{"command":"ls"}'
 | Variable | Purpose |
 |----------|---------|
 | `RUST_LOG` | Log level (`debug`, `info`, `warn`, `error`) |
-| `RAILGUARD_CONFIG` | Alternative to `-c` flag |
+| `RAILGUN_CONFIG` | Alternative to `-c` flag |
 
 ## Exit Codes
 

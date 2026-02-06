@@ -1,4 +1,4 @@
-//! Install Railguard as a Claude Code hook.
+//! Install Railgun as a Claude Code hook.
 
 use std::path::PathBuf;
 
@@ -12,7 +12,7 @@ fn get_settings_path() -> Result<PathBuf> {
     Ok(home.join(".claude").join("settings.json"))
 }
 
-/// Install Railguard as a Claude Code hook.
+/// Install Railgun as a Claude Code hook.
 pub fn run_install() -> Result<()> {
     let settings_path = get_settings_path()?;
 
@@ -55,7 +55,7 @@ pub fn run_install() -> Result<()> {
                     return hooks_arr.iter().any(|hook| {
                         hook.get("command")
                             .and_then(|c| c.as_str())
-                            .is_some_and(|s| s.contains("railguard"))
+                            .is_some_and(|s| s.contains("railgun"))
                     });
                 }
             }
@@ -63,7 +63,7 @@ pub fn run_install() -> Result<()> {
         });
 
         if already_installed {
-            println!("Railguard hook is already installed.");
+            println!("Railgun hook is already installed.");
             return Ok(());
         }
 
@@ -100,12 +100,12 @@ pub fn run_install() -> Result<()> {
     std::fs::write(&settings_path, content)
         .with_context(|| format!("Failed to write {}", settings_path.display()))?;
 
-    println!("Successfully installed Railguard hook!");
+    println!("Successfully installed Railgun hook!");
     println!();
     println!("Hook added to: {}", settings_path.display());
     println!("Command: {hook_command}");
     println!();
-    println!("Configuration file: railguard.toml (in current directory)");
+    println!("Configuration file: railgun.toml (in current directory)");
     println!();
     println!(
         "To test: echo '{{\"tool_name\":\"Bash\",\"tool_input\":{{\"command\":\"ls\"}}}}' | {binary_str} hook"
@@ -114,7 +114,7 @@ pub fn run_install() -> Result<()> {
     Ok(())
 }
 
-/// Uninstall Railguard hook from Claude Code settings.
+/// Uninstall Railgun hook from Claude Code settings.
 pub fn run_uninstall() -> Result<()> {
     let settings_path = get_settings_path()?;
 
@@ -129,20 +129,20 @@ pub fn run_uninstall() -> Result<()> {
     let mut settings: Value =
         serde_json::from_str(&content).with_context(|| "Failed to parse settings.json")?;
 
-    // Remove railguard from PreToolUse
+    // Remove railgun from PreToolUse
     if let Some(hooks) = settings.get_mut("hooks") {
         if let Some(pre_tool_use) = hooks.get_mut("PreToolUse") {
             if let Some(arr) = pre_tool_use.as_array_mut() {
                 arr.retain(|entry| {
                     if let Some(obj) = entry.as_object() {
-                        // Check nested hooks array for railguard
+                        // Check nested hooks array for railgun
                         if let Some(hooks_arr) = obj.get("hooks").and_then(|h| h.as_array()) {
-                            let has_railguard = hooks_arr.iter().any(|hook| {
+                            let has_railgun = hooks_arr.iter().any(|hook| {
                                 hook.get("command")
                                     .and_then(|c| c.as_str())
-                                    .is_some_and(|s| s.contains("railguard"))
+                                    .is_some_and(|s| s.contains("railgun"))
                             });
-                            return !has_railguard;
+                            return !has_railgun;
                         }
                     }
                     true
@@ -156,7 +156,7 @@ pub fn run_uninstall() -> Result<()> {
     std::fs::write(&settings_path, content)
         .with_context(|| format!("Failed to write {}", settings_path.display()))?;
 
-    println!("Successfully uninstalled Railguard hook.");
+    println!("Successfully uninstalled Railgun hook.");
 
     Ok(())
 }

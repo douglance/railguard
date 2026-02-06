@@ -4,16 +4,16 @@ use eyre::{Context, Result};
 use rg_types::Config;
 use std::path::{Path, PathBuf};
 
-/// Get the global config path (~/.config/railguard/railguard.toml)
+/// Get the global config path (~/.config/railgun/railgun.toml)
 fn global_config_path() -> Option<PathBuf> {
-    dirs_next::config_dir().map(|p| p.join("railguard").join("railguard.toml"))
+    dirs_next::config_dir().map(|p| p.join("railgun").join("railgun.toml"))
 }
 
-/// Load and parse the Railguard configuration file.
+/// Load and parse the Railgun configuration file.
 ///
 /// Config resolution order:
 /// 1. Specified path (if exists)
-/// 2. ~/.config/railguard/railguard.toml (if exists)
+/// 2. ~/.config/railgun/railgun.toml (if exists)
 /// 3. Default config
 pub fn load_config(path: impl AsRef<Path>) -> Result<Config> {
     let path = path.as_ref();

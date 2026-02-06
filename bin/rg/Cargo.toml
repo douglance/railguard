@@ -1,5 +1,5 @@
 [package]
-name = "railguard"
+name = "railgun"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,11 +7,11 @@ repository.workspace = true
 homepage.workspace = true
 keywords.workspace = true
 categories.workspace = true
-description = "Railguard CLI - Claude Code security hook for LLM protection"
+description = "Railgun CLI - Claude Code security hook for LLM protection"
 readme = "../../README.md"
 
 [[bin]]
-name = "railguard"
+name = "railgun"
 path = "src/main.rs"
 
 [dependencies]

@@ -7,7 +7,7 @@ repository.workspace = true
 homepage.workspace = true
 keywords.workspace = true
 categories = ["development-tools"]
-description = "Shared types for Railguard: Config, Verdict, BlockReason, HookInput"
+description = "Shared types for Railgun: Config, Verdict, BlockReason, HookInput"
 
 [dependencies]
 serde.workspace = true

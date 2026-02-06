@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Install Railguard and protect your Claude Code sessions in minutes.
+description: Install Railgun and protect your Claude Code sessions in minutes.
 ---
 
 ## Installation
@@ -8,38 +8,38 @@ description: Install Railguard and protect your Claude Code sessions in minutes.
 ### Quick Install (Recommended)
 
 ```bash
-curl -fsSL https://railguard.dev/install.sh | bash
+curl -fsSL https://railgun.dev/install.sh | bash
 ```
 
 This will:
 1. Download the correct binary for your platform
 2. Install it to `~/.local/bin/`
-3. Configure Claude Code to use Railguard
+3. Configure Claude Code to use Railgun
 
 ### From GitHub Releases
 
 Download the latest release for your platform:
 
-- [darwin-arm64](https://github.com/anthropics/railguard/releases/latest/download/railguard-darwin-arm64.tar.gz) (macOS Apple Silicon)
-- [darwin-x64](https://github.com/anthropics/railguard/releases/latest/download/railguard-darwin-x64.tar.gz) (macOS Intel)
-- [linux-arm64](https://github.com/anthropics/railguard/releases/latest/download/railguard-linux-arm64.tar.gz)
-- [linux-x64](https://github.com/anthropics/railguard/releases/latest/download/railguard-linux-x64.tar.gz)
+- [darwin-arm64](https://github.com/anthropics/railgun/releases/latest/download/railgun-darwin-arm64.tar.gz) (macOS Apple Silicon)
+- [darwin-x64](https://github.com/anthropics/railgun/releases/latest/download/railgun-darwin-x64.tar.gz) (macOS Intel)
+- [linux-arm64](https://github.com/anthropics/railgun/releases/latest/download/railgun-linux-arm64.tar.gz)
+- [linux-x64](https://github.com/anthropics/railgun/releases/latest/download/railgun-linux-x64.tar.gz)
 
 ```bash
 # Example: macOS Apple Silicon
-tar -xzf railguard-darwin-arm64.tar.gz
-mv railguard ~/.local/bin/
-railguard install
+tar -xzf railgun-darwin-arm64.tar.gz
+mv railgun ~/.local/bin/
+railgun install
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/anthropics/railguard.git
-cd railguard
+git clone https://github.com/anthropics/railgun.git
+cd railgun
 cargo build --release
-cp target/release/railguard ~/.local/bin/
-railguard install
+cp target/release/railgun ~/.local/bin/
+railgun install
 ```
 
 ## Quick Start
@@ -47,20 +47,20 @@ railguard install
 ### 1. Install the Hook
 
 ```bash
-railguard install
+railgun install
 ```
 
-This adds Railguard to `~/.claude/settings.json` as a `preToolUse` hook.
+This adds Railgun to `~/.claude/settings.json` as a `preToolUse` hook.
 
 ### 2. Verify Installation
 
 ```bash
-railguard --version
+railgun --version
 ```
 
 ### 3. Create a Policy (Optional)
 
-Create `railguard.toml` in your project or home directory:
+Create `railgun.toml` in your project or home directory:
 
 ```toml
 [policy]
@@ -89,30 +89,30 @@ ask = ["mcp__*"]  # Prompt for MCP tools
 
 ```bash
 # Test a safe command
-railguard test Bash '{"command":"ls -la"}'
+railgun test Bash '{"command":"ls -la"}'
 # Result: ALLOWED
 
 # Test a dangerous command
-railguard test Bash '{"command":"rm -rf /"}'
+railgun test Bash '{"command":"rm -rf /"}'
 # Result: DENIED (Dangerous command pattern)
 
 # Test secret detection
-railguard test Write '{"content":"AKIA1234567890EXAMPLE"}'
+railgun test Write '{"content":"AKIA1234567890EXAMPLE"}'
 # Result: DENIED (AWS access key detected)
 ```
 
 ### 5. Validate Configuration
 
 ```bash
-railguard lint
+railgun lint
 ```
 
 ## How It Works
 
 When Claude Code attempts to use a tool:
 
-1. Claude Code calls `railguard hook` with JSON on stdin
-2. Railguard parses the tool name and input
+1. Claude Code calls `railgun hook` with JSON on stdin
+2. Railgun parses the tool name and input
 3. Policy engine runs checks: tools → secrets → commands → paths → network
 4. Returns verdict: `allow`, `deny` (with reason), or `ask` (prompt user)
 5. Claude Code proceeds or blocks based on verdict
@@ -121,7 +121,7 @@ When Claude Code attempts to use a tool:
 {"tool_name":"Bash","tool_input":{"command":"ls"}}
                     │
                     ▼
-           railguard hook (stdin)
+           railgun hook (stdin)
                     │
                     ▼
             rg_policy::inspect()

@@ -1,6 +1,6 @@
-//! Shared types for Railguard.
+//! Shared types for Railgun.
 //!
-//! This crate contains the core types used throughout the Railguard system:
+//! This crate contains the core types used throughout the Railgun system:
 //!
 //! - [`Config`] - Configuration structures loaded from TOML
 //! - [`Verdict`] - Policy evaluation results (Allow/Deny/Ask)

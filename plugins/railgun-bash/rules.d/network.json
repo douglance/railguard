@@ -1,0 +1,14 @@
+{
+  "network": {
+    "blocked": [
+      "pastebin.com",
+      "hastebin.com",
+      "ngrok.io",
+      "ngrok.app",
+      "webhook.site",
+      "requestbin.com",
+      "pipedream.net",
+      "hookbin.com"
+    ]
+  }
+}

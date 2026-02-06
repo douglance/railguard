@@ -15,7 +15,7 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 ### How to Report
 
 1. **Do NOT open a public GitHub issue** for security vulnerabilities
-2. Use [GitHub Security Advisories](https://github.com/douglance/railguard/security/advisories/new) to report privately
+2. Use [GitHub Security Advisories](https://github.com/douglance/railgun/security/advisories/new) to report privately
 3. Alternatively, email security concerns to the maintainers directly
 
 ### What to Include
@@ -40,10 +40,10 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 
 ## Security Best Practices
 
-When using Railguard:
+When using Railgun:
 
-1. **Keep Railguard updated** - Always use the latest version
-2. **Review your policy file** - Ensure `railguard.toml` matches your security requirements
+1. **Keep Railgun updated** - Always use the latest version
+2. **Review your policy file** - Ensure `railgun.toml` matches your security requirements
 3. **Use strict mode** - Enable `mode = "strict"` for production environments
 4. **Audit tool permissions** - Regularly review `[tools]` and `[mcp]` sections
 5. **Protect secrets** - Never commit API keys or credentials, even in policy files

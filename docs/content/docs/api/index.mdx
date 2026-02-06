@@ -1,9 +1,9 @@
 ---
 title: API Reference
-description: Complete API reference for Railguard's Rust crates.
+description: Complete API reference for Railgun's Rust crates.
 ---
 
-Railguard is structured as a Cargo workspace with multiple crates.
+Railgun is structured as a Cargo workspace with multiple crates.
 
 ## Crate Overview
 
@@ -20,7 +20,7 @@ use rg_policy::{RuntimePolicy, inspect};
 
 fn main() -> eyre::Result<()> {
     // Load config
-    let config: Config = toml::from_str(&std::fs::read_to_string("railguard.toml")?)?;
+    let config: Config = toml::from_str(&std::fs::read_to_string("railgun.toml")?)?;
 
     // Build runtime policy
     let policy = RuntimePolicy::from_config(&config)?;
@@ -83,7 +83,7 @@ All public types are designed for concurrent use:
 
 ## Minimum Supported Rust Version
 
-Railguard requires Rust 1.75 or later.
+Railgun requires Rust 1.75 or later.
 
 ## Next Steps
 

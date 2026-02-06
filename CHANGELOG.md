@@ -50,14 +50,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configurable via `[mcp.servers]` section
 
 #### CLI Commands
-- `railguard install` - Configures Claude Code to use Railguard hook
-- `railguard uninstall` - Removes Railguard from Claude Code settings
-- `railguard lint` - Validates configuration file syntax and semantics
-- `railguard test <tool> <json>` - Test policy against specific inputs
-- `railguard hook` - Run as Claude Code hook (internal use)
+- `railgun install` - Configures Claude Code to use Railgun hook
+- `railgun uninstall` - Removes Railgun from Claude Code settings
+- `railgun lint` - Validates configuration file syntax and semantics
+- `railgun test <tool> <json>` - Test policy against specific inputs
+- `railgun hook` - Run as Claude Code hook (internal use)
 
 #### Configuration
-- TOML-based configuration (`railguard.toml`)
+- TOML-based configuration (`railgun.toml`)
 - Policy modes: `strict` (block) and `monitor` (log only)
 - Sensible defaults with full customization
 - Per-scanner enable/disable controls
@@ -70,4 +70,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cross-platform: macOS (Intel/ARM), Linux (x64/ARM)
 - 99 tests covering all security features
 
-[0.1.0]: https://github.com/douglance/railguard/releases/tag/v0.1.0
+[0.1.0]: https://github.com/douglance/railgun/releases/tag/v0.1.0

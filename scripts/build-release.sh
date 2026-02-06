@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Cross-platform release build script for Railguard
+# Cross-platform release build script for Railgun
 # Builds binaries for macOS (Intel + ARM) and Linux (x64 + ARM64)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -46,7 +46,7 @@ build_target() {
 
   # Build
   if cargo build --release --target "$target"; then
-    cp "target/$target/release/railguard" "bin/$binary_name"
+    cp "target/$target/release/railgun" "bin/$binary_name"
     echo "  Built: bin/$binary_name"
     return 0
   else

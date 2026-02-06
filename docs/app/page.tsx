@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { glyphs } from "@/components/nf-icon";
-import { RailguardLogo } from "@/components/railguard-logo";
+import { RailgunLogo } from "@/components/railgun-logo";
 
 // Animation variants for reusability
 const fadeInUp: Variants = {
@@ -33,7 +33,7 @@ const cardHover: Variants = {
 };
 
 // "guard" entrance animation - scale up with slight overshoot
-const guardEntrance: Variants = {
+const gunEntrance: Variants = {
   hidden: { opacity: 0, scale: 0.8 },
   visible: {
     opacity: 1,
@@ -50,17 +50,17 @@ const featureCards = [
   {
     title: "Fail Closed",
     icon: glyphs.shield,
-    description: "If it crashes, nothing gets through. TCP RST on failure means zero transactions leak.",
+    description: "If it crashes, nothing gets through. Panic becomes deny — zero secrets leak past the gate.",
   },
   {
     title: "Sub-Millisecond",
     icon: glyphs.bolt,
-    description: "Pre-computed selectors and zero-copy inspection. < 1ms p99 latency overhead.",
+    description: "Pre-compiled regex and zero-copy inspection. < 1ms p99 latency — invisible to your workflow.",
   },
   {
     title: "Deep Inspection",
     icon: glyphs.telescope,
-    description: "ABI decode calldata, validate arguments, enforce limits. Not just address filtering.",
+    description: "Scans for AWS keys, private keys, dangerous commands, protected paths, and exfiltration domains.",
   },
 ];
 
@@ -261,7 +261,7 @@ function TypewriterCode() {
             animate={{ opacity: 1 }}
             transition={{ delay: 1.0 }}
           >
-            rg run --{" "}
+            cargo install railgun &&{" "}
           </motion.span>
           <motion.span
             className="text-rust-400"
@@ -269,7 +269,7 @@ function TypewriterCode() {
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
           >
-            forge script Deploy
+            railgun install
           </motion.span>
           <motion.span
             className="inline-block w-2 h-4 ml-1 bg-rust-400 align-middle"
@@ -315,7 +315,7 @@ export default function HomePage() {
             variants={fadeInUp}
             transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <RailguardLogo size={80} />
+            <RailgunLogo size={80} />
           </motion.div>
           <motion.h1
             className="mb-4 text-6xl font-bold tracking-tight"
@@ -325,9 +325,9 @@ export default function HomePage() {
             Rail
             <motion.span
               className="text-rust-400 inline-block"
-              variants={shouldReduceMotion ? fadeInUp : guardEntrance}
+              variants={shouldReduceMotion ? fadeInUp : gunEntrance}
             >
-              guard
+              gun
             </motion.span>
           </motion.h1>
 
@@ -337,7 +337,7 @@ export default function HomePage() {
             variants={fadeInUp}
             transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            The Firewall for Your Wallet — Secure EVM transactions with policy-based inspection
+            The Security Hook for Claude Code — Stop secrets leakage, dangerous commands, and data exfiltration
           </motion.p>
 
           {/* Buttons */}

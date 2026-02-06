@@ -1,4 +1,4 @@
-//! Configuration types loaded from `railguard.toml`.
+//! Configuration types loaded from `railgun.toml`.
 
 use serde::{Deserialize, Serialize};
 

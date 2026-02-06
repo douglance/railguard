@@ -121,13 +121,13 @@ impl Verdict {
                 "This command matches a dangerous pattern. Use more targeted commands or adjust your policy.".to_string()
             }
             BlockReason::ProtectedPath { .. } => {
-                "This file is protected by policy. Check railguard.toml for allowed paths.".to_string()
+                "This file is protected by policy. Check railgun.toml for allowed paths.".to_string()
             }
             BlockReason::NetworkExfiltration { .. } => {
                 "This domain is blocked to prevent data exfiltration. Add to allow list if needed.".to_string()
             }
             BlockReason::InternalError { .. } => {
-                "An internal error occurred. Railguard is operating in fail-closed mode.".to_string()
+                "An internal error occurred. Railgun is operating in fail-closed mode.".to_string()
             }
         }
     }

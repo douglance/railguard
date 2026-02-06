@@ -1,21 +1,21 @@
-# Railguard
+# Railgun
 
 **The Firewall for Claude Code** — A local-first security hook that protects against secrets leakage, dangerous commands, and unauthorized tool use.
 
-[![CI](https://github.com/douglance/railguard/actions/workflows/ci.yml/badge.svg)](https://github.com/douglance/railguard/actions)
-[![Crates.io](https://img.shields.io/crates/v/railguard.svg)](https://crates.io/crates/railguard)
+[![CI](https://github.com/douglance/railgun/actions/workflows/ci.yml/badge.svg)](https://github.com/douglance/railgun/actions)
+[![Crates.io](https://img.shields.io/crates/v/railgun.svg)](https://crates.io/crates/railgun)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/douglance/railguard)](https://github.com/douglance/railguard/releases)
+[![Release](https://img.shields.io/github/v/release/douglance/railgun)](https://github.com/douglance/railgun/releases)
 
 ---
 
-## What is Railguard?
+## What is Railgun?
 
-Railguard sits between Claude Code and your system, inspecting every tool invocation before it executes. It blocks secrets from leaking, prevents dangerous commands, and gives you fine-grained control over what Claude can do.
+Railgun sits between Claude Code and your system, inspecting every tool invocation before it executes. It blocks secrets from leaking, prevents dangerous commands, and gives you fine-grained control over what Claude can do.
 
 ```
 ┌──────────────┐     ┌─────────────┐     ┌──────────────────┐
-│  Claude Code │ ──► │  Railguard  │ ──► │  Tool Execution  │
+│  Claude Code │ ──► │  Railgun  │ ──► │  Tool Execution  │
 │  (LLM)       │     │  (Inspect)  │     │  (Bash, Write..) │
 └──────────────┘     └─────────────┘     └──────────────────┘
                            │
@@ -37,53 +37,53 @@ Railguard sits between Claude Code and your system, inspecting every tool invoca
 ### Quick Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/douglance/railguard/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/douglance/railgun/main/install.sh | bash
 ```
 
 This will:
 1. Download the correct binary for your platform
 2. Install it to `~/.local/bin/`
-3. Configure Claude Code to use Railguard
+3. Configure Claude Code to use Railgun
 
 ### Homebrew (macOS/Linux)
 
 ```bash
 brew tap douglance/tap
-brew install railguard
-railguard install
+brew install railgun
+railgun install
 ```
 
 ### Cargo (Rust)
 
 ```bash
-cargo install railguard
-railguard install
+cargo install railgun
+railgun install
 ```
 
 ### From GitHub Releases
 
 Download the latest release for your platform:
 
-- [darwin-arm64](https://github.com/douglance/railguard/releases/latest/download/railguard-darwin-arm64.tar.gz) (macOS Apple Silicon)
-- [darwin-x64](https://github.com/douglance/railguard/releases/latest/download/railguard-darwin-x64.tar.gz) (macOS Intel)
-- [linux-arm64](https://github.com/douglance/railguard/releases/latest/download/railguard-linux-arm64.tar.gz)
-- [linux-x64](https://github.com/douglance/railguard/releases/latest/download/railguard-linux-x64.tar.gz)
+- [darwin-arm64](https://github.com/douglance/railgun/releases/latest/download/railgun-darwin-arm64.tar.gz) (macOS Apple Silicon)
+- [darwin-x64](https://github.com/douglance/railgun/releases/latest/download/railgun-darwin-x64.tar.gz) (macOS Intel)
+- [linux-arm64](https://github.com/douglance/railgun/releases/latest/download/railgun-linux-arm64.tar.gz)
+- [linux-x64](https://github.com/douglance/railgun/releases/latest/download/railgun-linux-x64.tar.gz)
 
 ```bash
 # Example: macOS Apple Silicon
-tar -xzf railguard-darwin-arm64.tar.gz
-mv railguard ~/.local/bin/
-railguard install
+tar -xzf railgun-darwin-arm64.tar.gz
+mv railgun ~/.local/bin/
+railgun install
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/douglance/railguard.git
-cd railguard
+git clone https://github.com/douglance/railgun.git
+cd railgun
 cargo build --release
-cp target/release/railguard ~/.local/bin/
-railguard install
+cp target/release/railgun ~/.local/bin/
+railgun install
 ```
 
 ## Quick Start
@@ -92,15 +92,15 @@ railguard install
 
 ```bash
 # Install the hook
-railguard install
+railgun install
 
 # Verify installation
-railguard --version
+railgun --version
 ```
 
 ### 2. Create Policy (Optional)
 
-Create `railguard.toml` in your project or home directory:
+Create `railgun.toml` in your project or home directory:
 
 ```toml
 [policy]
@@ -143,16 +143,16 @@ tools.deny = ["delete_*"]
 
 ```bash
 # Test a safe command
-railguard test Bash '{"command":"ls -la"}'
+railgun test Bash '{"command":"ls -la"}'
 # Result: ALLOWED
 
 # Test a dangerous command
-railguard test Bash '{"command":"rm -rf /"}'
+railgun test Bash '{"command":"rm -rf /"}'
 # Result: DENIED
 # Reason: Dangerous command blocked
 
 # Test secret detection
-railguard test Write '{"content":"aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"}'
+railgun test Write '{"content":"aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"}'
 # Result: DENIED
 # Reason: Secret detected in content
 ```
@@ -160,25 +160,25 @@ railguard test Write '{"content":"aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bP
 ### 4. Validate Configuration
 
 ```bash
-railguard lint
+railgun lint
 ```
 
 ## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `railguard install` | Configure Claude Code to use Railguard |
-| `railguard uninstall` | Remove Railguard from Claude Code |
-| `railguard lint` | Validate configuration file |
-| `railguard test <tool> <json>` | Test policy against specific input |
-| `railguard hook` | Run as hook (used internally by Claude Code) |
+| `railgun install` | Configure Claude Code to use Railgun |
+| `railgun uninstall` | Remove Railgun from Claude Code |
+| `railgun lint` | Validate configuration file |
+| `railgun test <tool> <json>` | Test policy against specific input |
+| `railgun hook` | Run as hook (used internally by Claude Code) |
 
 ## How It Works
 
-Railguard integrates with Claude Code's hook system. When Claude attempts to use a tool:
+Railgun integrates with Claude Code's hook system. When Claude attempts to use a tool:
 
-1. Claude Code calls `railguard hook` with JSON input
-2. Railguard inspects the tool name and input
+1. Claude Code calls `railgun hook` with JSON input
+2. Railgun inspects the tool name and input
 3. Policy engine checks: secrets, commands, paths, network, permissions
 4. Returns verdict: `allow`, `deny` (with reason), or `ask` (prompt user)
 5. Claude Code proceeds or blocks based on verdict
@@ -186,7 +186,7 @@ Railguard integrates with Claude Code's hook system. When Claude attempts to use
 ## Architecture
 
 ```
-railguard/
+railgun/
 ├── bin/rg/           # CLI binary
 │   └── src/
 │       ├── cli.rs        # Argument parsing

@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-# Railguard installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/douglance/railguard/main/install.sh | bash
+# Railgun installer
+# Usage: curl -fsSL https://raw.githubusercontent.com/douglance/railgun/main/install.sh | bash
 
-REPO="douglance/railguard"
+REPO="douglance/railgun"
 INSTALL_DIR="${HOME}/.local/bin"
 
 # Colors
@@ -66,30 +66,30 @@ main() {
     fi
     info "Version: ${version}"
 
-    local url="https://github.com/${REPO}/releases/download/${version}/railguard-${platform}.tar.gz"
+    local url="https://github.com/${REPO}/releases/download/${version}/railgun-${platform}.tar.gz"
     local checksum_url="https://github.com/${REPO}/releases/download/${version}/checksums.txt"
 
     # Create install directory
     mkdir -p "${INSTALL_DIR}"
 
     # Download and extract
-    info "Downloading railguard..."
+    info "Downloading railgun..."
     local tmpdir
     tmpdir=$(mktemp -d)
     trap 'rm -rf "${tmpdir}"' EXIT
 
-    curl -fsSL "${url}" -o "${tmpdir}/railguard.tar.gz"
+    curl -fsSL "${url}" -o "${tmpdir}/railgun.tar.gz"
 
     # Verify checksum
     info "Verifying checksum..."
     curl -fsSL "${checksum_url}" -o "${tmpdir}/checksums.txt"
     local expected_checksum
-    expected_checksum=$(grep "railguard-${platform}.tar.gz" "${tmpdir}/checksums.txt" | awk '{print $1}')
+    expected_checksum=$(grep "railgun-${platform}.tar.gz" "${tmpdir}/checksums.txt" | awk '{print $1}')
     local actual_checksum
     if command -v sha256sum &> /dev/null; then
-        actual_checksum=$(sha256sum "${tmpdir}/railguard.tar.gz" | awk '{print $1}')
+        actual_checksum=$(sha256sum "${tmpdir}/railgun.tar.gz" | awk '{print $1}')
     else
-        actual_checksum=$(shasum -a 256 "${tmpdir}/railguard.tar.gz" | awk '{print $1}')
+        actual_checksum=$(shasum -a 256 "${tmpdir}/railgun.tar.gz" | awk '{print $1}')
     fi
 
     if [[ "${expected_checksum}" != "${actual_checksum}" ]]; then
@@ -99,15 +99,15 @@ main() {
 
     # Extract
     info "Installing to ${INSTALL_DIR}..."
-    tar -xzf "${tmpdir}/railguard.tar.gz" -C "${INSTALL_DIR}"
-    chmod +x "${INSTALL_DIR}/railguard"
+    tar -xzf "${tmpdir}/railgun.tar.gz" -C "${INSTALL_DIR}"
+    chmod +x "${INSTALL_DIR}/railgun"
 
     # Verify installation
-    if ! "${INSTALL_DIR}/railguard" --version &> /dev/null; then
+    if ! "${INSTALL_DIR}/railgun" --version &> /dev/null; then
         error "Installation verification failed"
     fi
 
-    info "Successfully installed railguard to ${INSTALL_DIR}/railguard"
+    info "Successfully installed railgun to ${INSTALL_DIR}/railgun"
 
     # Check if install dir is in PATH
     if [[ ":${PATH}:" != *":${INSTALL_DIR}:"* ]]; then
@@ -120,20 +120,20 @@ main() {
 
     # Configure Claude Code
     info "Configuring Claude Code..."
-    if "${INSTALL_DIR}/railguard" install 2>/dev/null; then
+    if "${INSTALL_DIR}/railgun" install 2>/dev/null; then
         info "Claude Code configured successfully"
     else
         warn "Could not configure Claude Code automatically"
-        echo "Run manually: railguard install"
+        echo "Run manually: railgun install"
     fi
 
     echo ""
     info "Installation complete!"
     echo ""
     echo "Next steps:"
-    echo "  1. Create a policy file: railguard.toml"
-    echo "  2. Test your policy: railguard test Bash '{\"command\":\"ls\"}'"
-    echo "  3. Validate config: railguard lint"
+    echo "  1. Create a policy file: railgun.toml"
+    echo "  2. Test your policy: railgun test Bash '{\"command\":\"ls\"}'"
+    echo "  3. Validate config: railgun lint"
     echo ""
     echo "Documentation: https://github.com/${REPO}#readme"
 }

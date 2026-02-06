@@ -1,5 +1,5 @@
 {
-  "description": "Railguard security enforcement hooks",
+  "description": "Railgun security enforcement hooks",
   "hooks": {
     "PreToolUse": [
       {

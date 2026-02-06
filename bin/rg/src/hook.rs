@@ -113,7 +113,7 @@ fn output_error(message: &str) {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
             "permissionDecisionReason": message,
-            "additionalContext": "Railguard encountered an error and is operating in fail-closed mode."
+            "additionalContext": "Railgun encountered an error and is operating in fail-closed mode."
         }
     });
     // JSON serialization of simple JSON values cannot fail

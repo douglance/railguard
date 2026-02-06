@@ -1,10 +1,10 @@
 {
-  "name": "railguard",
+  "name": "railgun",
   "version": "0.1.0",
   "description": "LLM protection hook - blocks secrets, dangerous commands, and data exfiltration",
   "author": {
-    "name": "Railguard",
-    "url": "https://github.com/lv/railguard"
+    "name": "Railgun",
+    "url": "https://github.com/lv/railgun"
   },
   "keywords": ["security", "protection", "hook", "secrets", "exfiltration"],
   "hooks": "./hooks/hooks.json",

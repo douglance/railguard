@@ -1,6 +1,6 @@
 /**
  * Nerd Font Icon Component
- * Glyphs for the Railguard documentation
+ * Glyphs for the Railgun documentation
  *
  * These glyphs require a Nerd Font to render properly.
  * See: https://www.nerdfonts.com/cheat-sheet

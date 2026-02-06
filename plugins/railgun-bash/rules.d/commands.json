@@ -1,0 +1,19 @@
+{
+  "commands": {
+    "block": [
+      "rm\\s+-rf\\s+[/~]",
+      ">\\s*/dev/sd[a-z]",
+      "mkfs\\.",
+      "dd\\s+if=.+of=/dev/",
+      "chmod\\s+-R\\s+777\\s+/",
+      ":\\(\\)\\s*\\{\\s*:\\|:&\\s*\\}\\s*;"
+    ],
+    "ask": [
+      "rm\\s+-rf\\s+node_modules",
+      "rm\\s+-rf\\s+dist",
+      "rm\\s+-rf\\s+build",
+      "rm\\s+-rf\\s+\\.next",
+      "rm\\s+-rf\\s+target"
+    ]
+  }
+}

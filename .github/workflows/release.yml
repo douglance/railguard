@@ -159,17 +159,17 @@ jobs:
       - name: Verify binary
         if: ${{ !matrix.cross }}
         run: |
-          ./target/${{ matrix.target }}/release/railguard --version
-          ./target/${{ matrix.target }}/release/railguard --help
+          ./target/${{ matrix.target }}/release/railgun --version
+          ./target/${{ matrix.target }}/release/railgun --help
 
       - name: Package
         shell: bash
         run: |
-          BINARY_PATH="target/${{ matrix.target }}/release/railguard"
-          ARCHIVE_NAME="railguard-${{ matrix.name }}.tar.gz"
+          BINARY_PATH="target/${{ matrix.target }}/release/railgun"
+          ARCHIVE_NAME="railgun-${{ matrix.name }}.tar.gz"
 
           # Create tarball
-          tar -czvf "$ARCHIVE_NAME" -C "target/${{ matrix.target }}/release" railguard
+          tar -czvf "$ARCHIVE_NAME" -C "target/${{ matrix.target }}/release" railgun
 
           # Generate checksum (cross-platform)
           if command -v sha256sum &> /dev/null; then
@@ -186,10 +186,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: railguard-${{ matrix.name }}
+          name: railgun-${{ matrix.name }}
           path: |
-            railguard-${{ matrix.name }}.tar.gz
-            railguard-${{ matrix.name }}.tar.gz.sha256
+            railgun-${{ matrix.name }}.tar.gz
+            railgun-${{ matrix.name }}.tar.gz.sha256
           retention-days: 5
 
   # =============================================================================
@@ -222,7 +222,7 @@ jobs:
 
           # Create combined checksums file
           echo "# SHA256 Checksums" > checksums.txt
-          echo "# Railguard ${{ needs.validate-release.outputs.tag }}" >> checksums.txt
+          echo "# Railgun ${{ needs.validate-release.outputs.tag }}" >> checksums.txt
           echo "" >> checksums.txt
 
           for f in *.sha256; do
@@ -264,12 +264,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.validate-release.outputs.tag }}
-          name: Railguard ${{ needs.validate-release.outputs.tag }}
+          name: Railgun ${{ needs.validate-release.outputs.tag }}
           body_path: release_notes.md
           draft: false
           prerelease: ${{ needs.validate-release.outputs.prerelease == 'true' }}
           files: |
-            artifacts/railguard-*.tar.gz
+            artifacts/railgun-*.tar.gz
             artifacts/checksums.txt
           fail_on_unmatched_files: true
         env:
@@ -308,7 +308,7 @@ jobs:
         run: |
           cargo package -p rg-types --allow-dirty
           cargo package -p rg-policy --allow-dirty
-          cargo package -p railguard --allow-dirty
+          cargo package -p railgun --allow-dirty
 
       - name: Publish rg-types
         run: cargo publish -p rg-types --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -324,8 +324,8 @@ jobs:
       - name: Wait for crates.io index update
         run: sleep 30
 
-      - name: Publish railguard
-        run: cargo publish -p railguard --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Publish railgun
+        run: cargo publish -p railgun --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
       - name: Crates.io summary
         run: |
@@ -333,9 +333,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- [rg-types](https://crates.io/crates/rg-types)" >> $GITHUB_STEP_SUMMARY
           echo "- [rg-policy](https://crates.io/crates/rg-policy)" >> $GITHUB_STEP_SUMMARY
-          echo "- [railguard](https://crates.io/crates/railguard)" >> $GITHUB_STEP_SUMMARY
+          echo "- [railgun](https://crates.io/crates/railgun)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Install with: \`cargo install railguard\`" >> $GITHUB_STEP_SUMMARY
+          echo "Install with: \`cargo install railgun\`" >> $GITHUB_STEP_SUMMARY
 
   # =============================================================================
   # Update Homebrew Tap
@@ -374,70 +374,70 @@ jobs:
           VERSION=${{ needs.validate-release.outputs.version }}
           TAG=${{ needs.validate-release.outputs.tag }}
 
-          cat > railguard.rb << 'FORMULA'
-          class Railguard < Formula
+          cat > railgun.rb << 'FORMULA'
+          class Railgun < Formula
             desc "Security hook for Claude Code - protects against secrets leakage and dangerous commands"
-            homepage "https://github.com/douglance/railguard"
+            homepage "https://github.com/douglance/railgun"
             version "VERSION_PLACEHOLDER"
             license "MIT"
 
             on_macos do
               if Hardware::CPU.arm?
-                url "https://github.com/douglance/railguard/releases/download/TAG_PLACEHOLDER/railguard-darwin-arm64.tar.gz"
+                url "https://github.com/douglance/railgun/releases/download/TAG_PLACEHOLDER/railgun-darwin-arm64.tar.gz"
                 sha256 "DARWIN_ARM64_SHA_PLACEHOLDER"
               else
-                url "https://github.com/douglance/railguard/releases/download/TAG_PLACEHOLDER/railguard-darwin-x64.tar.gz"
+                url "https://github.com/douglance/railgun/releases/download/TAG_PLACEHOLDER/railgun-darwin-x64.tar.gz"
                 sha256 "DARWIN_X64_SHA_PLACEHOLDER"
               end
             end
 
             on_linux do
               if Hardware::CPU.arm?
-                url "https://github.com/douglance/railguard/releases/download/TAG_PLACEHOLDER/railguard-linux-arm64.tar.gz"
+                url "https://github.com/douglance/railgun/releases/download/TAG_PLACEHOLDER/railgun-linux-arm64.tar.gz"
                 sha256 "LINUX_ARM64_SHA_PLACEHOLDER"
               else
-                url "https://github.com/douglance/railguard/releases/download/TAG_PLACEHOLDER/railguard-linux-x64.tar.gz"
+                url "https://github.com/douglance/railgun/releases/download/TAG_PLACEHOLDER/railgun-linux-x64.tar.gz"
                 sha256 "LINUX_X64_SHA_PLACEHOLDER"
               end
             end
 
             def install
-              bin.install "railguard"
+              bin.install "railgun"
             end
 
             def post_install
-              ohai "Railguard installed!"
-              ohai "Run 'railguard install' to configure Claude Code"
+              ohai "Railgun installed!"
+              ohai "Run 'railgun install' to configure Claude Code"
             end
 
             test do
-              assert_match "railguard", shell_output("#{bin}/railguard --version")
+              assert_match "railgun", shell_output("#{bin}/railgun --version")
             end
           end
           FORMULA
 
           # Replace placeholders
-          sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" railguard.rb
-          sed -i "s/TAG_PLACEHOLDER/$TAG/g" railguard.rb
-          sed -i "s/DARWIN_ARM64_SHA_PLACEHOLDER/${{ steps.sha.outputs.darwin_arm64 }}/g" railguard.rb
-          sed -i "s/DARWIN_X64_SHA_PLACEHOLDER/${{ steps.sha.outputs.darwin_x64 }}/g" railguard.rb
-          sed -i "s/LINUX_ARM64_SHA_PLACEHOLDER/${{ steps.sha.outputs.linux_arm64 }}/g" railguard.rb
-          sed -i "s/LINUX_X64_SHA_PLACEHOLDER/${{ steps.sha.outputs.linux_x64 }}/g" railguard.rb
+          sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" railgun.rb
+          sed -i "s/TAG_PLACEHOLDER/$TAG/g" railgun.rb
+          sed -i "s/DARWIN_ARM64_SHA_PLACEHOLDER/${{ steps.sha.outputs.darwin_arm64 }}/g" railgun.rb
+          sed -i "s/DARWIN_X64_SHA_PLACEHOLDER/${{ steps.sha.outputs.darwin_x64 }}/g" railgun.rb
+          sed -i "s/LINUX_ARM64_SHA_PLACEHOLDER/${{ steps.sha.outputs.linux_arm64 }}/g" railgun.rb
+          sed -i "s/LINUX_X64_SHA_PLACEHOLDER/${{ steps.sha.outputs.linux_x64 }}/g" railgun.rb
 
           echo "=== Generated formula ==="
-          cat railguard.rb
+          cat railgun.rb
 
       - name: Push to Homebrew tap
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         with:
-          source_file: 'railguard.rb'
+          source_file: 'railgun.rb'
           destination_repo: 'douglance/homebrew-tap'
           destination_folder: 'Formula'
           user_email: 'github-actions[bot]@users.noreply.github.com'
           user_name: 'github-actions[bot]'
-          commit_message: 'Update railguard to ${{ needs.validate-release.outputs.tag }}'
+          commit_message: 'Update railgun to ${{ needs.validate-release.outputs.tag }}'
         continue-on-error: true  # Don't fail release if tap update fails
 
       - name: Homebrew summary
@@ -447,7 +447,7 @@ jobs:
           echo "Install with:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "brew tap douglance/tap" >> $GITHUB_STEP_SUMMARY
-          echo "brew install railguard" >> $GITHUB_STEP_SUMMARY
+          echo "brew install railgun" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   # =============================================================================
@@ -468,19 +468,19 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Quick Install (curl):**" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "curl -fsSL https://raw.githubusercontent.com/douglance/railguard/main/install.sh | bash" >> $GITHUB_STEP_SUMMARY
+          echo "curl -fsSL https://raw.githubusercontent.com/douglance/railgun/main/install.sh | bash" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Homebrew:**" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "brew tap douglance/tap && brew install railguard" >> $GITHUB_STEP_SUMMARY
+          echo "brew tap douglance/tap && brew install railgun" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Cargo:**" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "cargo install railguard" >> $GITHUB_STEP_SUMMARY
+          echo "cargo install railgun" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Links" >> $GITHUB_STEP_SUMMARY
           echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate-release.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [crates.io](https://crates.io/crates/railguard)" >> $GITHUB_STEP_SUMMARY
+          echo "- [crates.io](https://crates.io/crates/railgun)" >> $GITHUB_STEP_SUMMARY

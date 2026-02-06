@@ -85,15 +85,15 @@ const firaCode = localFont({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Railguard",
-    default: "Railguard - The Firewall for Your Wallet",
+    template: "%s | Railgun",
+    default: "Railgun - The Security Hook for Claude Code",
   },
   description:
-    "Local-first RPC proxy that secures EVM transactions. Deep Packet Inspection, policy enforcement, and fail-closed security for DeFi operators and protocol engineers.",
+    "Protect your AI coding sessions. Railgun intercepts Claude Code tool calls to block secrets leakage, dangerous commands, and data exfiltration with sub-millisecond, fail-closed security.",
   openGraph: {
-    title: "Railguard",
-    description: "The Firewall for Your Wallet - Secure EVM transaction proxy",
-    siteName: "Railguard",
+    title: "Railgun",
+    description: "The Security Hook for Claude Code — block secrets, dangerous commands, and exfiltration",
+    siteName: "Railgun",
   },
 };
 

@@ -1,15 +1,15 @@
 ---
 title: Introduction
-description: Railguard is a Claude Code hook that protects against secrets leakage, dangerous commands, and unauthorized tool use.
+description: Railgun is a Claude Code hook that protects against secrets leakage, dangerous commands, and unauthorized tool use.
 ---
 
-## What is Railguard?
+## What is Railgun?
 
-Railguard is **The Firewall for Claude Code**. It sits between Claude and your system, inspecting every tool invocation before it executes.
+Railgun is **The Firewall for Claude Code**. It sits between Claude and your system, inspecting every tool invocation before it executes.
 
 ```
 ┌──────────────┐     ┌─────────────┐     ┌──────────────────┐
-│  Claude Code │ ──► │  Railguard  │ ──► │  Tool Execution  │
+│  Claude Code │ ──► │  Railgun  │ ──► │  Tool Execution  │
 │  (LLM)       │     │  (Inspect)  │     │  (Bash, Write..) │
 └──────────────┘     └─────────────┘     └──────────────────┘
                            │
@@ -17,7 +17,7 @@ Railguard is **The Firewall for Claude Code**. It sits between Claude and your s
                      Block or Allow
 ```
 
-## Why Railguard?
+## Why Railgun?
 
 ### The Problem
 
@@ -28,7 +28,7 @@ Claude Code has powerful capabilities that can be dangerous if misused:
 
 ### The Solution
 
-Railguard performs inspection on every tool call:
+Railgun performs inspection on every tool call:
 
 1. **Check tool permissions** — Is this tool allowed, denied, or requires confirmation?
 2. **Scan for secrets** — AWS keys, GitHub tokens, private keys, high-entropy strings
@@ -51,7 +51,7 @@ All with **< 1ms latency** and a **fail-closed** architecture.
 
 ## Architecture
 
-Railguard is a Rust Cargo workspace:
+Railgun is a Rust Cargo workspace:
 
 | Crate | Purpose |
 |-------|---------|
@@ -59,7 +59,7 @@ Railguard is a Rust Cargo workspace:
 | `rg-types` | Shared types: Config, Verdict, HookInput |
 | `rg-policy` | Policy engine: secret scanning, command blocking |
 
-## Who is Railguard for?
+## Who is Railgun for?
 
 - **Developers** using Claude Code for daily work
 - **Teams** wanting guardrails on AI-assisted development
@@ -67,7 +67,7 @@ Railguard is a Rust Cargo workspace:
 
 ## Next Steps
 
-- [Getting Started](/docs/getting-started) — Install and configure Railguard
-- [Configuration](/docs/configuration) — Write your `railguard.toml` policy
+- [Getting Started](/docs/getting-started) — Install and configure Railgun
+- [Configuration](/docs/configuration) — Write your `railgun.toml` policy
 - [CLI Reference](/docs/cli) — All command-line options
 - [Policy Engine](/docs/policy-engine) — How inspection works

@@ -1,9 +1,9 @@
 ---
 title: Policy Engine
-description: Deep dive into how Railguard inspects tool calls and enforces security policy.
+description: Deep dive into how Railgun inspects tool calls and enforces security policy.
 ---
 
-The Policy Engine (`rg-policy` crate) is the heart of Railguard. It takes a tool call and returns a `Verdict`: `Allow`, `Deny`, or `Ask`.
+The Policy Engine (`rg-policy` crate) is the heart of Railgun. It takes a tool call and returns a `Verdict`: `Allow`, `Deny`, or `Ask`.
 
 ## Inspection Flow
 
@@ -15,7 +15,7 @@ The first check that fails results in an immediate verdict.
 
 ## 1. Tool-Level Check
 
-First, Railguard checks if the tool name matches any permission pattern:
+First, Railgun checks if the tool name matches any permission pattern:
 
 ```rust
 // Deny patterns checked first
@@ -36,7 +36,7 @@ if tools.allow.iter().any(|p| glob_match(p, tool_name)) {
 
 ## 2. Secret Scanning
 
-Railguard scans tool input for secrets:
+Railgun scans tool input for secrets:
 
 ### Built-in Detectors
 
@@ -60,7 +60,7 @@ Railguard scans tool input for secrets:
 
 ## 3. Command Pattern Matching
 
-For `Bash` tool, Railguard checks the command against dangerous patterns:
+For `Bash` tool, Railgun checks the command against dangerous patterns:
 
 ```rust
 // Check block patterns
@@ -86,7 +86,7 @@ for pattern in &policy.commands.block_patterns {
 
 ## 4. Path Protection
 
-For `Read`, `Write`, and `Edit` tools, Railguard checks if the path matches protected patterns:
+For `Read`, `Write`, and `Edit` tools, Railgun checks if the path matches protected patterns:
 
 ```rust
 for pattern in &policy.protected_paths.blocked {
@@ -106,7 +106,7 @@ for pattern in &policy.protected_paths.blocked {
 
 ## 5. Network Domain Checking
 
-For `Bash` (URLs in commands) and `WebFetch` tools, Railguard checks for exfiltration domains:
+For `Bash` (URLs in commands) and `WebFetch` tools, Railgun checks for exfiltration domains:
 
 ```rust
 for domain in &policy.network.block_domains {

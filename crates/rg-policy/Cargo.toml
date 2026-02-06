@@ -7,7 +7,7 @@ repository.workspace = true
 homepage.workspace = true
 keywords.workspace = true
 categories = ["development-tools"]
-description = "Policy engine for Railguard: secret scanning, dangerous command detection, path protection"
+description = "Policy engine for Railgun: secret scanning, dangerous command detection, path protection"
 
 [dependencies]
 rg-types.workspace = true

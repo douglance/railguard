@@ -1,4 +1,4 @@
-//! Policy engine for Railguard.
+//! Policy engine for Railgun.
 //!
 //! This crate provides tool inspection and policy enforcement for Claude Code hooks:
 //!

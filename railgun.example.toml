@@ -1,7 +1,7 @@
-# Railguard Configuration - Claude Code LLM Protection Hook
+# Railgun Configuration - Claude Code LLM Protection Hook
 #
-# This file configures Railguard's protection policies for Claude Code.
-# Copy to `railguard.toml` and customize for your needs.
+# This file configures Railgun's protection policies for Claude Code.
+# Copy to `railgun.toml` and customize for your needs.
 
 # =============================================================================
 # Tool-Level Permissions (checked BEFORE parameter inspection)

@@ -1,6 +1,6 @@
-# Contributing to Railguard
+# Contributing to Railgun
 
-Thank you for your interest in contributing to Railguard! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Railgun! This document provides guidelines and instructions for contributing.
 
 ## Development Setup
 
@@ -13,8 +13,8 @@ Thank you for your interest in contributing to Railguard! This document provides
 
 ```bash
 # Clone the repository
-git clone https://github.com/douglance/railguard.git
-cd railguard
+git clone https://github.com/douglance/railgun.git
+cd railgun
 
 # Build
 cargo build
@@ -105,7 +105,7 @@ cargo test test_name
 ## Project Structure
 
 ```
-railguard/
+railgun/
 ├── bin/rg/           # CLI binary
 │   └── src/
 │       ├── main.rs       # Entry point

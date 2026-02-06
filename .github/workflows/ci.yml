@@ -120,7 +120,7 @@ jobs:
       - name: Build
         run: cargo build --release
       - name: Verify binary runs
-        run: ./target/release/railguard --version
+        run: ./target/release/railgun --version
 
   # =============================================================================
   # Claude Code Plugin Integration Test
@@ -147,38 +147,38 @@ jobs:
       - name: Create empty settings.json
         run: echo '{}' > ~/.claude/settings.json
 
-      - name: Test railguard install
+      - name: Test railgun install
         run: |
-          ./target/release/railguard install
+          ./target/release/railgun install
           echo "=== settings.json after install ==="
           cat ~/.claude/settings.json
 
       - name: Verify hook was added
         run: |
-          # Check that hooks.PreToolUse exists and contains railguard
+          # Check that hooks.PreToolUse exists and contains railgun
           if ! grep -q '"PreToolUse"' ~/.claude/settings.json; then
             echo "::error::PreToolUse hook not found in settings.json"
             cat ~/.claude/settings.json
             exit 1
           fi
-          if ! grep -q 'railguard' ~/.claude/settings.json; then
-            echo "::error::railguard not found in PreToolUse hook"
+          if ! grep -q 'railgun' ~/.claude/settings.json; then
+            echo "::error::railgun not found in PreToolUse hook"
             cat ~/.claude/settings.json
             exit 1
           fi
           echo "::notice::Install verification passed!"
 
-      - name: Test railguard uninstall
+      - name: Test railgun uninstall
         run: |
-          ./target/release/railguard uninstall
+          ./target/release/railgun uninstall
           echo "=== settings.json after uninstall ==="
           cat ~/.claude/settings.json
 
       - name: Verify hook was removed
         run: |
-          # Check that railguard is no longer in settings
-          if grep -q 'railguard' ~/.claude/settings.json; then
-            echo "::error::railguard still found in settings.json after uninstall"
+          # Check that railgun is no longer in settings
+          if grep -q 'railgun' ~/.claude/settings.json; then
+            echo "::error::railgun still found in settings.json after uninstall"
             exit 1
           fi
           echo "::notice::Uninstall verification passed!"
@@ -193,13 +193,13 @@ jobs:
           }
           EOF
 
-          ./target/release/railguard install
+          ./target/release/railgun install
           echo "=== settings.json with merged hooks ==="
           cat ~/.claude/settings.json
 
-          # Verify railguard was added
-          if ! grep -q 'railguard' ~/.claude/settings.json; then
-            echo "::error::railguard not added to existing settings"
+          # Verify railgun was added
+          if ! grep -q 'railgun' ~/.claude/settings.json; then
+            echo "::error::railgun not added to existing settings"
             exit 1
           fi
           # Verify existing settings were preserved
@@ -212,7 +212,7 @@ jobs:
       - name: Test hook execution (stdin/stdout)
         run: |
           # Test that hook correctly processes input and returns verdict
-          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"ls -la"}}' | ./target/release/railguard hook)
+          RESULT=$(echo '{"tool_name":"Bash","tool_input":{"command":"ls -la"}}' | ./target/release/railgun hook)
           echo "Hook result: $RESULT"
 
           # Should be allowed (exit 0, no blocking output)
@@ -229,7 +229,7 @@ jobs:
         run: |
           # Test that secrets are blocked (exit code 2)
           # Using a fake AWS key pattern that triggers secret detection
-          echo '{"tool_name":"Bash","tool_input":{"command":"echo AKIAIOSFODNN7EXAMPLE"}}' | ./target/release/railguard hook > /tmp/hook_output.txt 2>&1 || EXIT_CODE=$?
+          echo '{"tool_name":"Bash","tool_input":{"command":"echo AKIAIOSFODNN7EXAMPLE"}}' | ./target/release/railgun hook > /tmp/hook_output.txt 2>&1 || EXIT_CODE=$?
 
           echo "Hook result:"
           cat /tmp/hook_output.txt
@@ -252,7 +252,7 @@ jobs:
       - name: Test lint command
         run: |
           # Create a valid config
-          cat > railguard.toml << 'EOF'
+          cat > railgun.toml << 'EOF'
           [policy]
           mode = "strict"
 
@@ -269,13 +269,13 @@ jobs:
           enabled = true
           EOF
 
-          ./target/release/railguard lint
+          ./target/release/railgun lint
           echo "::notice::Lint test passed!"
 
       - name: Test policy test command
         run: |
           # Test the test command
-          ./target/release/railguard test Bash '{"command":"ls"}'
+          ./target/release/railgun test Bash '{"command":"ls"}'
           echo "::notice::Test command passed!"
 
   # =============================================================================

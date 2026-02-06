@@ -2,11 +2,11 @@
 
 use clap::{Parser, Subcommand};
 
-/// Railguard - Claude Code LLM Protection Hook
+/// Railgun - Claude Code LLM Protection Hook
 ///
 /// Protects against secrets leakage and dangerous LLM actions.
 #[derive(Parser, Debug)]
-#[command(name = "railguard")]
+#[command(name = "railgun")]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
     /// Subcommand to execute
@@ -14,7 +14,7 @@ pub struct Cli {
     pub command: Commands,
 
     /// Path to configuration file
-    #[arg(short, long, default_value = "railguard.toml", global = true)]
+    #[arg(short, long, default_value = "railgun.toml", global = true)]
     pub config: String,
 }
 
@@ -40,7 +40,7 @@ pub enum Commands {
     /// Test policy with a specific tool input
     ///
     /// Example:
-    ///   railguard test Bash '{"command":"rm -rf /"}'
+    ///   railgun test Bash '{"command":"rm -rf /"}'
     Test {
         /// Tool name (e.g., "Bash", "Write", "Edit")
         tool_name: String,
@@ -55,31 +55,31 @@ mod tests {
 
     #[test]
     fn test_cli_hook_command() {
-        let cli = Cli::parse_from(["railguard", "hook"]);
+        let cli = Cli::parse_from(["railgun", "hook"]);
         assert!(matches!(cli.command, Commands::Hook));
     }
 
     #[test]
     fn test_cli_install_command() {
-        let cli = Cli::parse_from(["railguard", "install"]);
+        let cli = Cli::parse_from(["railgun", "install"]);
         assert!(matches!(cli.command, Commands::Install));
     }
 
     #[test]
     fn test_cli_uninstall_command() {
-        let cli = Cli::parse_from(["railguard", "uninstall"]);
+        let cli = Cli::parse_from(["railgun", "uninstall"]);
         assert!(matches!(cli.command, Commands::Uninstall));
     }
 
     #[test]
     fn test_cli_lint_command() {
-        let cli = Cli::parse_from(["railguard", "lint"]);
+        let cli = Cli::parse_from(["railgun", "lint"]);
         assert!(matches!(cli.command, Commands::Lint));
     }
 
     #[test]
     fn test_cli_test_command() {
-        let cli = Cli::parse_from(["railguard", "test", "Bash", r#"{"command":"ls"}"#]);
+        let cli = Cli::parse_from(["railgun", "test", "Bash", r#"{"command":"ls"}"#]);
         match cli.command {
             Commands::Test {
                 tool_name,
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn test_cli_custom_config() {
-        let cli = Cli::parse_from(["railguard", "-c", "custom.toml", "hook"]);
+        let cli = Cli::parse_from(["railgun", "-c", "custom.toml", "hook"]);
         assert_eq!(cli.config, "custom.toml");
     }
 }

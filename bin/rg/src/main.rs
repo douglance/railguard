@@ -1,4 +1,4 @@
-//! Railguard CLI - Claude Code LLM Protection Hook
+//! Railgun CLI - Claude Code LLM Protection Hook
 
 mod cli;
 mod config_loader;

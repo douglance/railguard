@@ -54,7 +54,7 @@ doc-valid-idents = [
     "ERC-20",
     "ERC-721",
     "EIP-1559",
-    "Railguard",
+    "Railgun",
 ]
 
 # Threshold for trivially_copy_pass_by_ref
